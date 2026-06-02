@@ -38,7 +38,7 @@ Powered by LLM (OpenAI-compatible API) for semantic understanding, with vector s
 
 ```bash
 git clone https://github.com/jim1010/ChatMarks.git
-cd chatmarks
+cd ChatMarks
 npm install
 npm run build
 ```
@@ -66,7 +66,7 @@ After installation, open the Dashboard (click the extension icon or press `Ctrl+
 2. Fill in your API credentials:
    - **API Base URL** — your OpenAI-compatible endpoint (default: `https://api.openai.com/v1`)
    - **API Key** — your API key
-   - **Chat Model** — the model for responses (e.g., `gpt-4o-mini`, `deepseek-chat`)
+   - **Chat Model** — the model for responses (e.g., `gpt-4o-mini`, `deepseek-v4-pro`)
    - **Embedding Model** — the model for vector embeddings (e.g., `text-embedding-3-small`)
 3. Click **Save**
 
@@ -99,7 +99,7 @@ New folders are created under your **Bookmarks Bar**.
 ## Architecture
 
 ```
-chatmarks/
+ChatMarks/
 ├── src/
 │   ├── entrypoints/          # Chrome extension entry points
 │   │   ├── background.ts     # Service worker (indexing, search routing)
