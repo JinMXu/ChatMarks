@@ -12,6 +12,8 @@
   <a href="#development">Development</a>
 </p>
 
+> [中文文档](README.zh-CN.md)
+
 ChatMarks is a Chrome extension that lets you **search your bookmarks using natural language**. Describe what you're looking for — "the Rust article I saved last month" or "that Figma tutorial about auto layout" — and ChatMarks finds it using AI.
 
 Powered by LLM (OpenAI-compatible API) for semantic understanding, with vector search for relevance ranking. **100% client-side — your bookmark data never leaves your browser**, except your query + top-20 candidates sent to the LLM API you configure.
@@ -83,7 +85,7 @@ The extension auto-indexes your bookmarks after setup. The index status is shown
 
 Type a natural language query like:
 
-> "帮我找上个月保存的 Rust 异步编程文章"
+> "find the Rust article I saved last month"
 
 ChatMarks will:
 1. Convert your query to a vector embedding
@@ -93,12 +95,12 @@ ChatMarks will:
 
 ### Smart Organize
 
-Open the Dashboard, click **智能整理** (Smart Organize) in the left sidebar:
+Open the Dashboard, click **Smart Organize** in the left sidebar:
 
-1. Click **分析并整理** — AI reads all your bookmarks
+1. Click **Analyze & Organize** — AI reads all your bookmarks
 2. Review the suggested folder structure (grouped by topic)
 3. Toggle individual suggestions on/off
-4. Click **应用** to create folders and move bookmarks
+4. Click **Apply** to create folders and move bookmarks
 5. Empty folders are automatically cleaned up
 
 New folders are created under your **Bookmarks Bar**.
