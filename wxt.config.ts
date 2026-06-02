@@ -3,7 +3,7 @@ import { defineConfig } from 'wxt';
 export default defineConfig({
   manifest: {
     name: 'ChatMarks',
-    description: 'Chat-based bookmark search powered by AI',
+    description: 'AI-powered bookmark search & organization for Chrome',
     permissions: ['bookmarks', 'storage', 'offscreen', 'sidePanel'],
     optional_permissions: [],
     host_permissions: [],
