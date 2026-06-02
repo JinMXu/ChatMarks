@@ -165,11 +165,11 @@ chatmarks/
 Any OpenAI-compatible API works, including:
 
 - **OpenAI** — `gpt-4o-mini`, `gpt-4o`, `text-embedding-3-small`
-- **DeepSeek** — `deepseek-chat`, `deepseek-reasoner`
+- **DeepSeek** — `deepseek-v4-flash`, `deepseek-v4-pro` (non-reasoning mode recommended for organize)
 - **Ollama** (local) — set base URL to `http://localhost:11434/v1`
 - **Other compatible providers** (Zhipu, Qwen, Moonshot, etc.)
 
-> **Note:** For Smart Organize, use a **non-reasoning model** (e.g., `deepseek-chat`, `gpt-4o-mini`). Reasoning models (DeepSeek-R1, etc.) may use all token budget for thinking and never output the JSON result.
+> **Note:** For Smart Organize, use a **non-reasoning model** (e.g., `deepseek-v4-pro` with reasoning off, `gpt-4o-mini`). Reasoning models may consume all token budget on thinking and never output the JSON result.
 
 ## Contributing
 
@@ -183,4 +183,4 @@ Issues and PRs welcome. Key areas for contribution:
 
 ## License
 
-MIT © 2025 ChatMarks
+MIT © 2026 ChatMarks
