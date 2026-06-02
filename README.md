@@ -34,6 +34,15 @@ Powered by LLM (OpenAI-compatible API) for semantic understanding, with vector s
 
 ## Installation
 
+### Pre-built (Recommended)
+
+1. Go to [Releases](https://github.com/jim1010/ChatMarks/releases)
+2. Download the latest `chatmarks-x.x.x-chrome.zip`
+3. Unzip to a local folder
+4. In Chrome, go to `chrome://extensions`
+5. Enable **Developer mode** (top right)
+6. Click **Load unpacked** and select the unzipped folder
+
 ### From Source
 
 ```bash
@@ -43,17 +52,15 @@ npm install
 npm run build
 ```
 
-Then in Chrome:
-1. Go to `chrome://extensions`
-2. Enable **Developer mode** (top right)
-3. Click **Load unpacked**
-4. Select the `.output/chrome-mv3` folder
+Then load the `.output/chrome-mv3` folder as an unpacked extension in Chrome.
 
 ### Development
 
 ```bash
 npm run dev          # Chrome dev mode with hot reload
 npm run dev:firefox  # Firefox dev mode
+npm run build        # Production build → .output/chrome-mv3/
+npm run zip          # Build & zip for release → .output/chatmarks-x.x.x-chrome.zip
 ```
 
 ## Usage
