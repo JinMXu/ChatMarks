@@ -52,6 +52,8 @@ export interface SearchResult {
   dateAdded: number;
   /** LLM-provided explanation of why this matches */
   matchReason: string;
+  /** Cosine similarity score (0~1), only set when vector embeddings are available */
+  score?: number;
 }
 
 /** A conversation session */
@@ -76,6 +78,9 @@ export interface Settings {
   apiKey: string;
   apiBaseUrl: string;
   chatModel: string;
+  /** Embedding-specific API settings (fallback to chat apiKey/apiBaseUrl when empty) */
+  embeddingApiKey: string;
+  embeddingApiBaseUrl: string;
   embeddingModel: string;
   embeddingMode: 'remote' | 'local';
   /** Max bookmarks to send to LLM in degraded mode */
@@ -90,6 +95,8 @@ export const DEFAULT_SETTINGS: Settings = {
   apiKey: '',
   apiBaseUrl: 'https://api.openai.com/v1',
   chatModel: 'gpt-4o-mini',
+  embeddingApiKey: '',
+  embeddingApiBaseUrl: '',
   embeddingModel: 'text-embedding-3-small',
   embeddingMode: 'remote',
   maxBookmarksForLLM: 500,

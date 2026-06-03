@@ -22,7 +22,9 @@ export async function searchBookmarks(
   try {
     const embeddingCount = await getEmbeddingCount();
 
-    let candidates;
+    let candidates: BookmarkNode[];
+    let scoreMap: Map<string, number> | undefined;
+
     if (embeddingCount > 0) {
       // Vector search path
       const queryVector = await embed([query]);
@@ -31,7 +33,10 @@ export async function searchBookmarks(
       if (topResults.length === 0) {
         // Fall back to degraded mode
         candidates = await getAllBookmarks();
+        candidates = candidates.slice(0, settings.maxBookmarksForLLM);
+        scoreMap = undefined;
       } else {
+        scoreMap = new Map(topResults.map((r) => [r.bookmarkId, r.score]));
         candidates = await getBookmarksByIds(topResults.map((r) => r.bookmarkId));
       }
     } else {
@@ -45,7 +50,7 @@ export async function searchBookmarks(
     const systemMsg = buildSystemPrompt(language);
     const userMsg =
       embeddingCount > 0
-        ? buildSearchMessage(query, candidates, language)
+        ? buildSearchMessage(query, candidates, language, scoreMap)
         : buildDegradedSearchMessage(query, candidates, language);
 
     // Stream LLM response
@@ -67,7 +72,12 @@ export async function searchBookmarks(
     );
 
     // Try to parse structured results from LLM response
-    const results = extractResults(fullResponse, candidates);
+    let results = extractResults(fullResponse, candidates);
+
+    // Re-rank: fuse vector scores with LLM ordering
+    if (scoreMap && scoreMap.size > 0 && results.length > 0) {
+      results = reRankResults(results, scoreMap);
+    }
 
     // Send results
     chrome.runtime.sendMessage({
@@ -87,6 +97,27 @@ export async function searchBookmarks(
       error: String(err),
     } as RuntimeMessage);
   }
+}
+
+/**
+ * Fuse vector similarity scores with LLM positional ordering.
+ * finalScore = vectorScore * 0.7 + positionBoost * 0.3
+ */
+function reRankResults(
+  results: SearchResult[],
+  scoreMap: Map<string, number>,
+): SearchResult[] {
+  const n = results.length;
+
+  return results
+    .map((r, i) => {
+      const vectorScore = scoreMap.get(r.bookmarkId) ?? 0;
+      const positionBoost = (n - i) / n; // first = 1.0, last = 1/N
+      const finalScore = vectorScore * 0.7 + positionBoost * 0.3;
+
+      return { ...r, score: Math.round(finalScore * 100) / 100 };
+    })
+    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 }
 
 /**

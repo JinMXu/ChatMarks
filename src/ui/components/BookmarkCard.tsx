@@ -33,7 +33,14 @@ export default function BookmarkCard({ result }: BookmarkCardProps) {
       <div class="bookmark-card-body">
         <div class="bookmark-favicon">{domainInitial(domain)}</div>
         <div class="bookmark-info">
-          <h4 class="bookmark-title">{result.title || t('bookmark.untitled')}</h4>
+          <div class="bookmark-title-row">
+            <h4 class="bookmark-title">{result.title || t('bookmark.untitled')}</h4>
+            {result.score !== undefined && (
+              <span class="bookmark-score-badge">
+                {Math.round(result.score * 100)}%
+              </span>
+            )}
+          </div>
           <span class="bookmark-domain">{domain}</span>
           <div class="bookmark-meta">
             {result.path && <span class="bookmark-path">{result.path}</span>}

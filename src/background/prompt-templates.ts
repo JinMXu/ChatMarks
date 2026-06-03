@@ -29,6 +29,7 @@ Today's date: ${today}
 ## Important
 - Only recommend bookmarks from the provided candidates. Do not invent bookmarks.
 - If the query includes time references like "last month", "上周", "yesterday", pay extra attention to bookmark dates.
+- A [Relevance: XX%] tag may appear on candidates — this is a semantic search hint. Prefer candidates with higher relevance percentages when the query is about topic/content matching.
 - Respond in the same language as the user's query.`;
 }
 
@@ -39,6 +40,7 @@ export function buildSearchMessage(
   query: string,
   candidates: BookmarkNode[],
   language?: Locale,
+  scores?: Map<string, number>,
 ): string {
   const locale = language || getLocale();
   const dateRange = parseRelativeDateExpression(query);
@@ -50,7 +52,10 @@ export function buildSearchMessage(
       month: '2-digit',
       day: '2-digit',
     });
-    return `[${i + 1}] Title: ${b.title}
+    const scoreLine = scores?.has(b.id)
+      ? ` [Relevance: ${Math.round(scores.get(b.id)! * 100)}%]`
+      : '';
+    return `[${i + 1}] Title: ${b.title}${scoreLine}
    URL: ${b.url || 'N/A'}
    Folder: ${b.path}
    Added: ${dateStr}`;

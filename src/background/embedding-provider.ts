@@ -18,15 +18,18 @@ export async function embed(texts: string[]): Promise<EmbeddingVector[]> {
 
 /**
  * Remote embedding via OpenAI-compatible API.
+ * Uses embedding-specific API key/base URL if set, otherwise falls back to chat API settings.
  */
 async function embedRemote(texts: string[], settings: Settings): Promise<EmbeddingVector[]> {
-  const url = `${settings.apiBaseUrl}/embeddings`;
+  const apiKey = settings.embeddingApiKey || settings.apiKey;
+  const apiBaseUrl = settings.embeddingApiBaseUrl || settings.apiBaseUrl;
+  const url = `${apiBaseUrl}/embeddings`;
 
   const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${settings.apiKey}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
       model: settings.embeddingModel,

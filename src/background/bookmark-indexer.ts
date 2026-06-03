@@ -3,7 +3,7 @@ import { putBookmarks, getBookmarkCount, clearAllBookmarks, setMeta, getMeta } f
 import type { BookmarkNode, IndexStatus } from '@/shared/types';
 import { INDEXING_BATCH_SIZE, INDEXING_BATCH_DELAY_MS } from '@/shared/constants';
 import { embed } from './embedding-provider';
-import { putEmbeddings, deleteEmbedding } from '@/shared/db';
+import { putEmbeddings, deleteEmbedding, getAllEmbeddings } from '@/shared/db';
 import { type EmbeddingEntry } from '@/shared/types';
 
 let currentStatus: IndexStatus = {
@@ -26,6 +26,7 @@ function updateStatus(partial: Partial<IndexStatus>) {
  */
 export async function startIndexing(): Promise<void> {
   if (currentStatus.phase === 'scanning' || currentStatus.phase === 'embedding') {
+    console.log('[ChatMarks] Indexing already in progress, skipping');
     return; // Already running
   }
 
@@ -35,6 +36,7 @@ export async function startIndexing(): Promise<void> {
     const tree = await chrome.bookmarks.getTree();
     const bookmarks = flattenBookmarkTree(tree);
 
+    console.log(`[ChatMarks] Indexing: ${bookmarks.length} total bookmarks found`);
     updateStatus({ total: bookmarks.length, indexed: 0 });
 
     // Get existing bookmarks for diff
@@ -56,6 +58,26 @@ export async function startIndexing(): Promise<void> {
       }
     }
 
+    console.log(`[ChatMarks] Hash compare: ${toEmbed.length} new/changed, ${bookmarks.length - toEmbed.length} matching`);
+
+    // Cross-check: bookmarks with matching hash but missing embedding need re-embedding
+    const existingEmbeddings = await getAllEmbeddings();
+    const embeddedIds = new Set(existingEmbeddings.map((e) => e.bookmarkId));
+    console.log(`[ChatMarks] Existing embeddings in DB: ${existingEmbeddings.length}`);
+    const staleCount = toEmbed.length;
+    for (let i = bookmarks.length - 1; i >= 0; i--) {
+      const b = bookmarks[i];
+      if (b.indexed && !embeddedIds.has(b.id)) {
+        b.indexed = false;
+        toEmbed.push(b);
+      }
+    }
+    if (toEmbed.length > staleCount) {
+      console.log(`[ChatMarks] Found ${toEmbed.length - staleCount} bookmarks with stale hashes but no embeddings, re-indexing them`);
+    }
+
+    console.log(`[ChatMarks] Final toEmbed: ${toEmbed.length}, oldHashes: ${Object.keys(oldHashes).length}, embeddings: ${existingEmbeddings.length}`);
+
     // Find removed bookmarks (in old but not in new)
     for (const id of Object.keys(oldHashes)) {
       if (!newHashes[id]) {
@@ -63,14 +85,22 @@ export async function startIndexing(): Promise<void> {
       }
     }
 
-    // Store bookmarks
+    // Store bookmarks, but only save hashes for already-indexed ones.
+    // Hashes for toEmbed will be saved after successful embedding.
     const allBookmarks = bookmarks.map((b) => ({
       ...b,
       indexed: b.indexed || (!oldHashes[b.id]),
     }));
-
     await putBookmarks(allBookmarks);
-    await setMeta('bookmark_hashes', newHashes);
+
+    // Save hashes only for bookmarks that don't need embedding
+    const hashesToSave: Record<string, string> = {};
+    for (const b of bookmarks) {
+      if (!toEmbed.some((e) => e.id === b.id)) {
+        hashesToSave[b.id] = b.hash;
+      }
+    }
+    await setMeta('bookmark_hashes', hashesToSave);
 
     // Remove embeddings for deleted bookmarks
     for (const id of toRemove) {
@@ -100,6 +130,13 @@ export async function startIndexing(): Promise<void> {
         }));
 
         await putEmbeddings(entries);
+
+        // Persist hashes for this batch so they survive a mid-indexing crash
+        const currentHashes = (await getMeta('bookmark_hashes') as Record<string, string>) || {};
+        for (const b of batch) {
+          currentHashes[b.id] = b.hash;
+        }
+        await setMeta('bookmark_hashes', currentHashes);
 
         updateStatus({
           indexed: Math.min(i + INDEXING_BATCH_SIZE, toEmbed.length),

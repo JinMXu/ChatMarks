@@ -1,7 +1,7 @@
 import { useI18n } from '@/ui/hooks/useI18n';
 import { useSettings } from '@/ui/hooks/useSettings';
 import { DEFAULT_SETTINGS } from '@/shared/types';
-import type { Settings } from '@/shared/types';
+import type { Settings, IndexStatus, RuntimeMessage } from '@/shared/types';
 import type { Locale } from '@/shared/i18n';
 import { useState, useEffect } from 'preact/hooks';
 
@@ -13,10 +13,32 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
   const { t, locale, setLocale } = useI18n();
   const { settings, saveSettings, saved } = useSettings();
   const [form, setForm] = useState<Settings>(settings ?? DEFAULT_SETTINGS);
+  const [indexing, setIndexing] = useState(false);
+  const [indexStatus, setIndexStatus] = useState<IndexStatus | null>(null);
+  const [indexMessage, setIndexMessage] = useState('');
 
   useEffect(() => {
     if (settings) setForm(settings);
   }, [settings]);
+
+  // Listen for index status updates from background
+  useEffect(() => {
+    const listener = (message: RuntimeMessage) => {
+      if (message.type === 'INDEX_STATUS') {
+        setIndexStatus(message.status);
+        if (message.status.phase === 'idle' || message.status.phase === 'complete' || message.status.phase === 'error') {
+          setIndexing(false);
+        }
+        if (message.status.phase === 'error' && message.status.error) {
+          setIndexMessage(message.status.error);
+        }
+      }
+    };
+    chrome.runtime.onMessage.addListener(listener);
+    return () => {
+      chrome.runtime.onMessage.removeListener(listener);
+    };
+  }, []);
 
   if (!settings) {
     return (
@@ -42,8 +64,16 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
   };
 
   const handleReindex = async () => {
+    setIndexing(true);
+    setIndexMessage('');
+    setIndexStatus(null);
     await chrome.runtime.sendMessage({ type: 'START_INDEXING' });
   };
+
+  const isIndexing = indexStatus?.phase === 'scanning' || indexStatus?.phase === 'embedding';
+  const pct = indexStatus && indexStatus.total > 0
+    ? Math.round((indexStatus.indexed / indexStatus.total) * 100)
+    : 0;
 
   return (
     <div class="settings-panel">
@@ -99,6 +129,31 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
                 onInput={(e) => update('chatModel', (e.target as HTMLInputElement).value)}
               />
             </label>
+          </div>
+
+          <div class="settings-section">
+            <h4>{t('settings.embeddingConfig')}</h4>
+            <p class="hint" style="margin-bottom: var(--space-3);">{t('settings.embeddingApiHint')}</p>
+
+            <label>
+              {t('settings.embeddingApiBaseUrl')}
+              <input
+                type="text"
+                value={form.embeddingApiBaseUrl}
+                onInput={(e) => update('embeddingApiBaseUrl', (e.target as HTMLInputElement).value)}
+                placeholder={form.apiBaseUrl || 'https://api.openai.com/v1'}
+              />
+            </label>
+
+            <label>
+              {t('settings.embeddingApiKey')}
+              <input
+                type="password"
+                value={form.embeddingApiKey}
+                onInput={(e) => update('embeddingApiKey', (e.target as HTMLInputElement).value)}
+                placeholder={form.apiKey ? '(using chat API key)' : 'sk-...'}
+              />
+            </label>
 
             <label>
               {t('settings.embeddingModel')}
@@ -108,10 +163,6 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
                 onInput={(e) => update('embeddingModel', (e.target as HTMLInputElement).value)}
               />
             </label>
-          </div>
-
-          <div class="settings-section">
-            <h4>{t('settings.searchSettings')}</h4>
 
             <label>
               {t('settings.embeddingMode')}
@@ -123,6 +174,10 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
                 <option value="local">{t('settings.embeddingModeLocal')}</option>
               </select>
             </label>
+          </div>
+
+          <div class="settings-section">
+            <h4>{t('settings.searchSettings')}</h4>
 
             <label>
               {t('settings.vectorSearchTopK')}
@@ -149,9 +204,33 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
 
           <div class="settings-section">
             <h4>{t('settings.indexManagement')}</h4>
+
+            {isIndexing && (
+              <div class="index-status-row">
+                <div class="progress-bar">
+                  <div class="progress-fill" style={{ width: `${pct}%` }} />
+                </div>
+                <span class="index-status-text">
+                  {indexStatus?.phase === 'scanning' ? t('index.scanning') : t('index.indexing', { pct })}
+                </span>
+              </div>
+            )}
+
+            {indexStatus?.phase === 'complete' && !isIndexing && (
+              <div class="index-done">
+                {t('index.bookmarksIndexed', { count: indexStatus.indexed })}
+              </div>
+            )}
+
+            {indexStatus?.phase === 'error' && !isIndexing && (
+              <div class="index-error">
+                {t('index.errorPrefix')}: {indexMessage}
+              </div>
+            )}
+
             <div class="actions">
-              <button type="button" onClick={handleReindex}>
-                {t('settings.reindex')}
+              <button type="button" onClick={handleReindex} disabled={isIndexing}>
+                {isIndexing ? t('index.indexing', { pct }) : t('settings.reindex')}
               </button>
             </div>
           </div>

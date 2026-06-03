@@ -19,9 +19,14 @@ async function loadModel() {
     if (statusEl) statusEl.textContent = 'Model ready';
     console.log('[ChatMarks Offscreen] Embedding model loaded');
   } catch (err) {
-    console.error('[ChatMarks Offscreen] Failed to load model:', err);
-    if (statusEl) statusEl.textContent = 'Error loading model';
-    throw err;
+    const msg = err instanceof Error ? err.message : String(err);
+    isLoaded = false;
+    if (statusEl) statusEl.textContent = `Error: ${msg}`;
+    throw new Error(
+      msg.includes('Failed to resolve module')
+        ? 'Local embedding model not available. @xenova/transformers is not installed. Switch to remote mode or run: npm install @xenova/transformers'
+        : `Failed to load local embedding model: ${msg}`,
+    );
   }
 }
 
@@ -61,6 +66,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 // Start loading the model immediately
-loadModel().catch(console.error);
+loadModel().catch((err) => {
+  console.warn('[ChatMarks Offscreen]', err.message);
+});
 
 export default undefined;

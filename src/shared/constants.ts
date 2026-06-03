@@ -28,5 +28,5 @@ export const DEFAULT_TOP_K = 20;
 export const OFFSCREEN_DOCUMENT_PATH = '/offscreen.html';
 
 /** Timing constants */
-export const INDEXING_BATCH_SIZE = 20;
+export const INDEXING_BATCH_SIZE = 10;
 export const INDEXING_BATCH_DELAY_MS = 100;
