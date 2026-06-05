@@ -53,9 +53,15 @@ export async function searchBookmarks(
         ? buildSearchMessage(query, candidates, language, scoreMap)
         : buildDegradedSearchMessage(query, candidates, language);
 
-    // Stream LLM response
+    // Stream LLM response with incremental [MATCH:N] parsing
     let streamedContent = '';
-    let resultsSent = false;
+    let streamBuffer = '';
+    const matchResults: SearchResult[] = [];
+    const matchSeen = new Set<string>();
+
+    // Build candidate lookup map (1-based index → BookmarkNode)
+    const candidateMap = new Map<number, BookmarkNode>();
+    candidates.forEach((c, i) => candidateMap.set(i + 1, c));
 
     const fullResponse = await chatCompletionStream(
       [
@@ -63,16 +69,85 @@ export async function searchBookmarks(
         { role: 'user', content: userMsg },
       ],
       (chunk) => {
-        streamedContent += chunk;
-        chrome.runtime.sendMessage({
-          type: 'SEARCH_STREAM',
-          chunk,
-        } as RuntimeMessage);
+        streamBuffer += chunk;
+
+        // Split on newlines; keep incomplete last line in buffer
+        const lines = streamBuffer.split('\n');
+        streamBuffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const matchMatch = line.match(/^\[MATCH:(\d+)\]/);
+          if (matchMatch) {
+            const idx = parseInt(matchMatch[1], 10);
+            const candidate = candidateMap.get(idx);
+            if (candidate && !matchSeen.has(candidate.id)) {
+              matchSeen.add(candidate.id);
+              const result: SearchResult = {
+                bookmarkId: candidate.id,
+                title: candidate.title,
+                url: candidate.url || '',
+                path: candidate.path,
+                dateAdded: candidate.dateAdded,
+                matchReason: line.slice(matchMatch[0].length).trim(),
+                score: scoreMap?.get(candidate.id),
+              };
+              matchResults.push(result);
+
+              chrome.runtime.sendMessage({
+                type: 'SEARCH_RESULT_APPEND',
+                result,
+              } as RuntimeMessage);
+            }
+          } else {
+            // Non-MATCH line: stream as text
+            streamedContent += line + '\n';
+            chrome.runtime.sendMessage({
+              type: 'SEARCH_STREAM',
+              chunk: line + '\n',
+            } as RuntimeMessage);
+          }
+        }
       },
     );
 
-    // Try to parse structured results from LLM response
-    let results = extractResults(fullResponse, candidates);
+    // Process any remaining buffer content after stream ends
+    if (streamBuffer.trim()) {
+      const matchMatch = streamBuffer.match(/^\[MATCH:(\d+)\]/);
+      if (matchMatch) {
+        const idx = parseInt(matchMatch[1], 10);
+        const candidate = candidateMap.get(idx);
+        if (candidate && !matchSeen.has(candidate.id)) {
+          matchSeen.add(candidate.id);
+          const result: SearchResult = {
+            bookmarkId: candidate.id,
+            title: candidate.title,
+            url: candidate.url || '',
+            path: candidate.path,
+            dateAdded: candidate.dateAdded,
+            matchReason: streamBuffer.slice(matchMatch[0].length).trim(),
+            score: scoreMap?.get(candidate.id),
+          };
+          matchResults.push(result);
+
+          chrome.runtime.sendMessage({
+            type: 'SEARCH_RESULT_APPEND',
+            result,
+          } as RuntimeMessage);
+        }
+      } else {
+        streamedContent += streamBuffer;
+        chrome.runtime.sendMessage({
+          type: 'SEARCH_STREAM',
+          chunk: streamBuffer,
+        } as RuntimeMessage);
+      }
+    }
+
+    // Use incrementally collected results; fall back to URL extraction if empty
+    let results = matchResults;
+    if (results.length === 0) {
+      results = extractResults(fullResponse, candidates);
+    }
 
     // Re-rank: fuse vector scores with LLM ordering
     if (scoreMap && scoreMap.size > 0 && results.length > 0) {
