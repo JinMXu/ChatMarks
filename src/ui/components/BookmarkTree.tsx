@@ -45,19 +45,19 @@ export default function BookmarkTree() {
 
   if (loading) {
     return (
-      <div class="bookmark-tree">
-        <div class="tree-header">
-          <h3>{t('tree.title')}</h3>
+      <div class="flex flex-col h-full overflow-hidden">
+        <div class="flex items-center justify-between p-3 px-4 border-b border-border-light shrink-0">
+          <h3 class="text-base font-bold tracking-[-0.01em]">{t('tree.title')}</h3>
         </div>
-        <div class="tree-loading">{t('loading')}</div>
+        <div class="p-6 px-4 text-text-tertiary text-base text-center">{t('loading')}</div>
       </div>
     );
   }
 
   return (
-    <div class="bookmark-tree">
-      <div class="tree-header">
-        <h3>{t('tree.title')}</h3>
+    <div class="flex flex-col h-full overflow-hidden">
+      <div class="flex items-center justify-between p-3 px-4 border-b border-border-light shrink-0">
+        <h3 class="text-base font-bold tracking-[-0.01em]">{t('tree.title')}</h3>
         <button
           class="btn-text"
           onClick={() => setExpanded(new Set(tree.map((n) => n.id)))}
@@ -66,7 +66,7 @@ export default function BookmarkTree() {
           {t('tree.expand')}
         </button>
       </div>
-      <div class="tree-content">
+      <div class="flex-1 overflow-y-auto overflow-x-hidden py-1">
         {tree.map((node) => (
           <TreeNodeItem
             key={node.id}
@@ -97,30 +97,39 @@ function TreeNodeItem({ node, expanded, onToggle, onClick, depth }: TreeNodeItem
   const hasChildren = isFolder && node.children && node.children.length > 0;
 
   return (
-    <div class="tree-node" style={{ paddingLeft: `${depth * 16 + 4}px` }}>
+    <div class="select-none" style={{ paddingLeft: `${depth * 16 + 4}px` }}>
       <div
-        class={`tree-item ${!isFolder ? 'tree-leaf' : ''}`}
+        class={`flex items-center gap-1 py-1 px-2 my-px mx-1 cursor-pointer rounded-sm transition-colors duration-120 whitespace-nowrap overflow-hidden ${
+          !isFolder ? 'hover:bg-accent-light' : 'hover:bg-bg-hover'
+        }`}
         onClick={() => onClick(node)}
       >
         {isFolder && (
-          <span class={`tree-arrow ${isOpen ? 'open' : ''}`}>
+          <span
+            class={`text-[8px] w-4 h-4 inline-flex items-center justify-center shrink-0 text-text-tertiary transition-transform duration-120 ${
+              isOpen ? 'rotate-90' : ''
+            }`}
+          >
             ▶
           </span>
         )}
-        <span class={`tree-icon ${isFolder ? 'folder' : 'bookmark'}`}>
+        <span class="shrink-0 text-[14px] leading-none">
           {isFolder ? '📁' : '🔖'}
         </span>
-        <span class="tree-title" title={node.title}>
+        <span
+          class="text-base overflow-hidden text-ellipsis whitespace-nowrap flex-1 min-w-0 hover:text-accent"
+          title={node.title}
+        >
           {node.title || (isFolder ? t('tree.folder') : t('bookmark.untitled'))}
         </span>
         {node.url && (
-          <span class="tree-url" title={node.url}>
+          <span class="text-[10px] text-text-tertiary font-mono overflow-hidden text-ellipsis whitespace-nowrap max-w-[140px] shrink" title={node.url}>
             {truncateUrl(node.url)}
           </span>
         )}
       </div>
       {isFolder && isOpen && hasChildren && (
-        <div class="tree-children">
+        <div>
           {node.children!.map((child) => (
             <TreeNodeItem
               key={child.id}

@@ -21,7 +21,6 @@ export default function DuplicatesPanel({ onClose }: DuplicatesPanelProps) {
   const localeRef = useRef(locale);
   localeRef.current = locale;
 
-  // Select all items in all groups by default when results arrive
   useEffect(() => {
     if (phase === 'result' && duplicateSets.length > 0) {
       const allIds = new Set<string>();
@@ -30,7 +29,6 @@ export default function DuplicatesPanel({ onClose }: DuplicatesPanelProps) {
           allIds.add(item.bookmarkId);
         }
       }
-      // Deselect the first item in each group (keep at least one)
       for (const set of duplicateSets) {
         if (set.items.length > 0) {
           allIds.delete(set.items[0].bookmarkId);
@@ -70,7 +68,6 @@ export default function DuplicatesPanel({ onClose }: DuplicatesPanelProps) {
         next.add(bookmarkId);
       }
 
-      // Check if any group would have all items selected — revert
       const wouldBeComplete = checkGroupAllSelected(next);
       if (wouldBeComplete) {
         return prev;
@@ -97,7 +94,6 @@ export default function DuplicatesPanel({ onClose }: DuplicatesPanelProps) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (allInGroupSelected) {
-        // Deselect all but keep first item
         for (const id of groupIds) {
           next.delete(id);
         }
@@ -105,7 +101,6 @@ export default function DuplicatesPanel({ onClose }: DuplicatesPanelProps) {
           next.delete(group.items[0].bookmarkId);
         }
       } else {
-        // Select all except the first item
         for (let i = 0; i < group.items.length; i++) {
           if (i === 0) {
             next.delete(group.items[i].bookmarkId);
@@ -141,13 +136,13 @@ export default function DuplicatesPanel({ onClose }: DuplicatesPanelProps) {
   const isWorking = phase === 'scanning' || phase === 'deleting';
 
   return (
-    <div class="duplicates-panel">
-      <div class="duplicates-header">
-        <h3>{t('duplicates.title')}</h3>
-        <div class="duplicates-header-actions">
+    <div class="flex flex-col h-full overflow-hidden">
+      <div class="flex items-center justify-between p-3 px-3 pt-3 pb-0 shrink-0">
+        <h3 class="text-base font-semibold m-0">{t('duplicates.title')}</h3>
+        <div class="flex items-center gap-2">
           {phase === 'result' && hasDupes && (
             <button
-              class="btn-primary btn-sm"
+              class="btn-primary py-1 px-3 text-sm rounded-sm"
               onClick={handleDelete}
               disabled={selectedIds.size === 0}
             >
@@ -155,7 +150,7 @@ export default function DuplicatesPanel({ onClose }: DuplicatesPanelProps) {
             </button>
           )}
           {phase === 'done' && (
-            <button class="btn-primary btn-sm" onClick={handleScan}>
+            <button class="btn-primary py-1 px-3 text-sm rounded-sm" onClick={handleScan}>
               {t('duplicates.rescan')}
             </button>
           )}
@@ -163,13 +158,15 @@ export default function DuplicatesPanel({ onClose }: DuplicatesPanelProps) {
         </div>
       </div>
 
-      <div class="duplicates-body">
+      <div class="flex-1 overflow-y-auto p-3">
         {phase === 'idle' && (
-          <div class="duplicates-idle">
-            <p>{locale === 'zh-CN'
-              ? '扫描所有书签，检测重复或高度相似的条目。精确匹配基于 URL 标准化，相似匹配基于书签内容向量。'
-              : 'Scan all bookmarks for duplicate or highly similar entries. Exact matches use URL normalization, near-duplicates use content embeddings.'
-            }</p>
+          <div class="flex flex-col items-center justify-center h-full gap-4 text-center">
+            <p class="text-text-secondary text-sm leading-relaxed max-w-[280px]">
+              {locale === 'zh-CN'
+                ? '扫描所有书签，检测重复或高度相似的条目。精确匹配基于 URL 标准化，相似匹配基于书签内容向量。'
+                : 'Scan all bookmarks for duplicate or highly similar entries. Exact matches use URL normalization, near-duplicates use content embeddings.'
+              }
+            </p>
             <button class="btn-primary" onClick={handleScan}>
               {t('duplicates.scan')}
             </button>
@@ -177,17 +174,17 @@ export default function DuplicatesPanel({ onClose }: DuplicatesPanelProps) {
         )}
 
         {isWorking && (
-          <div class="duplicates-loading">
-            <div class="organize-progress-bar">
+          <div class="flex flex-col items-center justify-center h-full gap-3">
+            <div class="w-full h-1 bg-border rounded-full overflow-hidden">
               <div class="organize-progress-fill" />
             </div>
-            <p class="duplicates-progress-text">{progressText}</p>
+            <p class="text-sm text-text-secondary text-center">{progressText}</p>
           </div>
         )}
 
         {phase === 'error' && (
-          <div class="duplicates-error">
-            <p>{error}</p>
+          <div class="flex flex-col items-center justify-center h-full gap-3">
+            <p class="text-error text-sm text-center break-words">{error}</p>
             <button class="btn-primary" onClick={handleScan}>
               {t('duplicates.retry')}
             </button>
@@ -195,17 +192,17 @@ export default function DuplicatesPanel({ onClose }: DuplicatesPanelProps) {
         )}
 
         {phase === 'done' && (
-          <div class="duplicates-done">
-            <p>{t('duplicates.deleted', { n: deletedCount })}</p>
-            {error && <p class="duplicates-error-sub">{error}</p>}
+          <div class="flex flex-col items-center justify-center h-full gap-2">
+            <p class="text-base text-success font-medium">{t('duplicates.deleted', { n: deletedCount })}</p>
+            {error && <p class="text-xs text-text-secondary font-normal">{error}</p>}
           </div>
         )}
 
         {phase === 'result' && (
-          <div class="duplicates-results">
+          <div class="flex flex-col gap-3">
             {!hasDupes && (
-              <div class="duplicates-empty">
-                <p>{t('duplicates.noDupes')}</p>
+              <div class="flex flex-col items-center justify-center gap-3 py-4">
+                <p class="text-text-secondary text-sm">{t('duplicates.noDupes')}</p>
                 <button class="btn-primary" onClick={handleScan}>
                   {t('duplicates.rescan')}
                 </button>
@@ -213,30 +210,30 @@ export default function DuplicatesPanel({ onClose }: DuplicatesPanelProps) {
             )}
 
             {hasDupes && (
-              <p class="duplicates-summary">{t('duplicates.scanResult', { n: duplicateSets.length })}</p>
+              <p class="text-sm text-text-secondary m-0 pb-1">{t('duplicates.scanResult', { n: duplicateSets.length })}</p>
             )}
 
             {duplicateSets.map((set, groupIndex) => {
               const allInGroupSelected = set.items.every((i) => selectedIds.has(i.bookmarkId));
               return (
-                <div key={groupIndex} class="duplicates-group">
-                  <div class="duplicates-group-header">
-                    <span class={`duplicates-method-badge ${set.detectionMethod}`}>
+                <div key={groupIndex} class="border border-border-light rounded overflow-hidden">
+                  <div class="flex items-center gap-2 p-2 px-3 bg-bg-secondary border-b border-border-light flex-wrap">
+                    <span class={`duplicates-method-badge text-xs font-semibold py-px px-1.5 rounded-xs uppercase shrink-0 ${set.detectionMethod}`}>
                       {set.detectionMethod === 'exact' ? t('duplicates.exact') : t('duplicates.near')}
                     </span>
                     {set.normalizedUrl && (
-                      <span class="duplicates-url" title={set.normalizedUrl}>
+                      <span class="text-xs text-text-secondary truncate flex-1 min-w-0 font-mono" title={set.normalizedUrl}>
                         {set.normalizedUrl}
                       </span>
                     )}
-                    <span class="duplicates-count">{t('duplicates.dupes', { n: set.items.length })}</span>
-                    <button class="btn-text duplicates-group-toggle" onClick={() => toggleGroupSelect(groupIndex)}>
+                    <span class="text-xs text-text-secondary whitespace-nowrap shrink-0">{t('duplicates.dupes', { n: set.items.length })}</span>
+                    <button class="btn-text text-xs shrink-0" onClick={() => toggleGroupSelect(groupIndex)}>
                       {allInGroupSelected ? t('duplicates.deselectAllGroup') : t('duplicates.selectAllGroup')}
                     </button>
                   </div>
 
                   {selectedIds.size > 0 && set.items.every((i) => selectedIds.has(i.bookmarkId)) && (
-                    <p class="duplicates-warning">{t('duplicates.atLeastOne')}</p>
+                    <p class="duplicates-warning text-xs m-0 py-1 px-3">{t('duplicates.atLeastOne')}</p>
                   )}
 
                   {set.items.map((item) => {
@@ -245,19 +242,22 @@ export default function DuplicatesPanel({ onClose }: DuplicatesPanelProps) {
                     return (
                       <label
                         key={item.bookmarkId}
-                        class={`duplicates-item ${isSelected ? 'selected-for-deletion' : ''} ${isFirst ? 'keep-item' : ''}`}
+                        class={`duplicates-item flex items-start gap-2 p-2 px-3 cursor-pointer transition-colors duration-120 border-b border-border-light last:border-b-0 hover:bg-bg-hover ${
+                          isSelected ? 'selected-for-deletion' : ''
+                        } ${isFirst ? 'keep-item' : ''}`}
                       >
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleItem(item.bookmarkId)}
                           disabled={isFirst && set.items.filter((i) => !selectedIds.has(i.bookmarkId)).length === 0}
+                          class="mt-0.5 shrink-0 accent-accent"
                         />
-                        <div class="duplicates-item-info">
-                          <span class="duplicates-item-title">{item.title || t('bookmark.untitled')}</span>
-                          <span class="duplicates-item-path">{item.path}</span>
-                          <span class="duplicates-item-url">{item.url}</span>
-                          <span class="duplicates-item-date">
+                        <div class="flex flex-col gap-0.5 min-w-0 flex-1">
+                          <span class="text-sm font-medium text-text-primary truncate">{item.title || t('bookmark.untitled')}</span>
+                          <span class="text-xs text-text-secondary truncate">{item.path}</span>
+                          <span class="text-xs text-accent truncate font-mono">{item.url}</span>
+                          <span class="text-xs text-text-secondary">
                             {locale === 'zh-CN'
                               ? `${formatDateLocale(locale, item.dateAdded)}添加`
                               : `Added ${formatDateLocale(locale, item.dateAdded)}`

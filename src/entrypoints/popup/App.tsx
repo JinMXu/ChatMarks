@@ -12,14 +12,14 @@ function PopupApp() {
 
   if (!settings) {
     return (
-      <div class="app-container">
+      <div class="w-[400px] h-[560px] flex flex-col overflow-hidden bg-bg-primary">
         <SettingsBar onSave={() => {}} />
       </div>
     );
   }
 
   return (
-    <div class="app-container">
+    <div class="app-container w-[400px] h-[560px] flex flex-col overflow-hidden bg-bg-primary">
       <SettingsBar onSave={openSidePanel} />
       <IndexStatus />
       <ChatView messages={messages} status={status} onClear={clearChat} />

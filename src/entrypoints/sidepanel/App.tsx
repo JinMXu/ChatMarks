@@ -21,10 +21,10 @@ function SidePanelApp() {
   };
 
   return (
-    <div class="sidepanel-container">
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <h2>ChatMarks</h2>
+    <div class="sidepanel-container flex h-screen overflow-hidden bg-bg-primary">
+      <aside class="w-[260px] min-w-[260px] bg-bg-secondary border-r border-border flex flex-col p-3 gap-2">
+        <div class="flex items-center justify-between py-1 px-1 pb-3 border-b border-border-light shrink-0">
+          <h2 class="text-lg font-bold tracking-[-0.01em] text-text-primary">ChatMarks</h2>
           <button
             class="btn-icon"
             onClick={createConversation}
@@ -39,7 +39,7 @@ function SidePanelApp() {
           onSelect={selectConversation}
           onDelete={deleteConversation}
         />
-        <div class="sidebar-footer">
+        <div class="mt-auto pt-2 border-t border-border-light flex flex-col gap-1 shrink-0">
           <button class="btn-text" onClick={handleDashboard}>
             {t('settingsBar.dashboard')}
           </button>
@@ -49,7 +49,7 @@ function SidePanelApp() {
           <IndexStatus minimal />
         </div>
       </aside>
-      <main class="chat-area">
+      <main class="flex-1 flex flex-col overflow-hidden min-w-0 bg-bg-primary">
         <ChatView messages={messages} status={status} onClear={clearChat} />
         <ChatInput onSend={sendMessage} disabled={status === 'searching'} />
       </main>

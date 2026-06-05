@@ -32,31 +32,31 @@ function DashboardApp() {
   };
 
   return (
-    <div class="dashboard-container">
+    <div class="dashboard-container flex h-screen overflow-hidden bg-bg-primary">
       {/* Left: Bookmark Tree */}
-      <aside class="dashboard-left">
+      <aside class="dashboard-left w-[280px] min-w-[220px] max-w-[400px] overflow-hidden bg-bg-secondary border-r border-border flex flex-col">
         <BookmarkTree />
-        <div class="dashboard-left-footer">
+        <div class="p-2 px-3 border-t border-border-light shrink-0">
           <button
-            class={`btn-text ${rightPanel === 'duplicates' ? 'active' : ''}`}
+            class={`btn-text ${rightPanel === 'duplicates' ? 'text-accent bg-accent-light font-semibold' : ''}`}
             onClick={() => switchTo('duplicates')}
           >
             {t('duplicates.title')}
           </button>
           <button
-            class={`btn-text ${rightPanel === 'organize' ? 'active' : ''}`}
+            class={`btn-text ${rightPanel === 'organize' ? 'text-accent bg-accent-light font-semibold' : ''}`}
             onClick={() => switchTo('organize')}
           >
             {t('organize.title')}
           </button>
           <button
-            class={`btn-text ${rightPanel === 'exportImport' ? 'active' : ''}`}
+            class={`btn-text ${rightPanel === 'exportImport' ? 'text-accent bg-accent-light font-semibold' : ''}`}
             onClick={() => switchTo('exportImport')}
           >
             {t('exportImport.title')}
           </button>
           <button
-            class={`btn-text ${rightPanel === 'settings' ? 'active' : ''}`}
+            class={`btn-text ${rightPanel === 'settings' ? 'text-accent bg-accent-light font-semibold' : ''}`}
             onClick={() => switchTo('settings')}
           >
             {t('sidebar.settings')}
@@ -65,13 +65,13 @@ function DashboardApp() {
       </aside>
 
       {/* Center: Chat */}
-      <main class="dashboard-center">
+      <main class="flex-1 flex flex-col overflow-hidden min-w-0">
         <ChatView messages={messages} status={status} onClear={clearChat} />
         <ChatInput onSend={sendMessage} disabled={status === 'searching'} />
       </main>
 
       {/* Right: Panel switcher */}
-      <aside class="dashboard-right">
+      <aside class="dashboard-right w-[320px] min-w-[240px] max-w-[500px] overflow-hidden bg-bg-secondary border-l border-border flex flex-col">
         {rightPanel === 'duplicates' && (
           <DuplicatesPanel onClose={() => setRightPanel('results')} />
         )}

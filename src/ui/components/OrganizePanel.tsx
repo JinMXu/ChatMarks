@@ -112,16 +112,16 @@ export default function OrganizePanel({ onClose }: OrganizePanelProps) {
   const isWorking = phase === 'scanning' || phase === 'sending' || phase === 'waiting' || phase === 'applying';
 
   return (
-    <div class="organize-panel">
-      <div class="organize-header">
-        <h3>{t('organize.title')}</h3>
-        <div class="organize-header-actions">
+    <div class="flex flex-col h-full overflow-hidden">
+      <div class="flex items-center justify-between p-3 px-4 border-b border-border-light shrink-0 gap-2">
+        <h3 class="text-base font-bold tracking-[-0.01em] whitespace-nowrap">{t('organize.title')}</h3>
+        <div class="flex items-center gap-1">
           {phase === 'result' && (
             <>
               <button class="btn-text" onClick={toggleSelectAll}>
                 {selectAll ? t('organize.deselectAll') : t('organize.selectAll')}
               </button>
-              <button class="btn-primary btn-sm" onClick={handleApply} disabled={selectedCount === 0}>
+              <button class="btn-primary py-1 px-3 text-sm rounded-sm" onClick={handleApply} disabled={selectedCount === 0}>
                 {t('organize.apply', { n: selectedCount })}
               </button>
             </>
@@ -130,10 +130,10 @@ export default function OrganizePanel({ onClose }: OrganizePanelProps) {
         </div>
       </div>
 
-      <div class="organize-body">
+      <div class="flex-1 overflow-y-auto p-3">
         {phase === 'idle' && (
-          <div class="organize-idle">
-            <p>{t('organize.empty')}</p>
+          <div class="flex flex-col items-center justify-center h-full gap-4 text-center">
+            <p class="text-base text-text-tertiary leading-relaxed max-w-[240px]">{t('organize.empty')}</p>
             <button class="btn-primary" onClick={handleStart}>
               {t('organize.start')}
             </button>
@@ -141,33 +141,33 @@ export default function OrganizePanel({ onClose }: OrganizePanelProps) {
         )}
 
         {isWorking && (
-          <div class="organize-loading">
-            <div class="organize-progress-container">
-              <div class="organize-progress-bar">
+          <div class="flex flex-col items-center justify-center h-full gap-4 p-6">
+            <div class="w-full max-w-[260px]">
+              <div class="w-full h-1 bg-border rounded-full overflow-hidden mb-3">
                 <div class="organize-progress-fill" />
               </div>
-              <div class="organize-progress-steps">
-                <span class={`organize-step ${phase === 'scanning' ? 'active' : phase !== 'idle' && phase !== 'scanning' ? 'done' : ''}`}>
+              <div class="flex justify-between gap-1">
+                <span class={`text-xs transition-colors duration-120 whitespace-nowrap ${phase === 'scanning' ? 'text-accent font-semibold' : phase !== 'idle' && phase !== 'scanning' ? 'text-success' : 'text-text-tertiary'}`}>
                   1. {locale === 'zh-CN' ? '读取' : 'Read'}
                 </span>
-                <span class={`organize-step ${phase === 'sending' ? 'active' : phase === 'waiting' || phase === 'result' ? 'done' : ''}`}>
+                <span class={`text-xs transition-colors duration-120 whitespace-nowrap ${phase === 'sending' ? 'text-accent font-semibold' : phase === 'waiting' || phase === 'result' ? 'text-success' : 'text-text-tertiary'}`}>
                   2. {locale === 'zh-CN' ? '发送' : 'Send'}
                 </span>
-                <span class={`organize-step ${phase === 'waiting' ? 'active' : phase === 'result' ? 'done' : ''}`}>
+                <span class={`text-xs transition-colors duration-120 whitespace-nowrap ${phase === 'waiting' ? 'text-accent font-semibold' : phase === 'result' ? 'text-success' : 'text-text-tertiary'}`}>
                   3. {locale === 'zh-CN' ? 'AI 分析' : 'AI'}
                 </span>
               </div>
             </div>
-            <p class="organize-progress-text">{progressText}</p>
-            <p class="organize-elapsed">
+            <p class="text-base text-text-secondary text-center">{progressText}</p>
+            <p class="text-xs text-text-tertiary">
               {locale === 'zh-CN' ? `已耗时 ${elapsed}s` : `Elapsed: ${elapsed}s`}
             </p>
           </div>
         )}
 
         {phase === 'error' && (
-          <div class="organize-error">
-            <p>{error}</p>
+          <div class="flex flex-col items-center justify-center h-full gap-3 text-center">
+            <p class="text-base text-error leading-[1.5] whitespace-pre-wrap break-all max-h-[200px] overflow-y-auto">{error}</p>
             <button class="btn-primary" onClick={handleStart}>
               {locale === 'zh-CN' ? '重试' : 'Retry'}
             </button>
@@ -175,38 +175,39 @@ export default function OrganizePanel({ onClose }: OrganizePanelProps) {
         )}
 
         {phase === 'applied' && (
-          <div class="organize-done">
-            <p>{t('organize.applied')}</p>
+          <div class="flex items-center justify-center h-full">
+            <p class="text-base text-success font-medium">{t('organize.applied')}</p>
           </div>
         )}
 
         {phase === 'result' && (
-          <div class="organize-results">
+          <div class="flex flex-col gap-3">
             {Array.from(grouped.entries()).map(([folder, items]) => (
-              <div key={folder} class="organize-group">
-                <div class="organize-group-header">
-                  <span class="organize-folder">📁 {folder}</span>
-                  <span class="organize-count">{items.length}</span>
+              <div key={folder} class="border border-border-light rounded overflow-hidden">
+                <div class="flex items-center justify-between p-2 px-3 bg-bg-tertiary text-base font-semibold">
+                  <span class="overflow-hidden text-ellipsis whitespace-nowrap">📁 {folder}</span>
+                  <span class="text-xs text-text-tertiary bg-bg-primary py-px px-1.5 rounded-full shrink-0">{items.length}</span>
                 </div>
                 {items.map((s) => (
                   <label
                     key={s.bookmarkId}
-                    class={`organize-item ${s.selected ? '' : 'deselected'}`}
+                    class={`flex items-start gap-2 p-2 px-3 border-t border-border-light cursor-pointer transition-colors duration-120 hover:bg-bg-hover ${s.selected ? '' : 'opacity-50'}`}
                   >
                     <input
                       type="checkbox"
                       checked={s.selected}
                       onChange={() => toggleItem(s.bookmarkId)}
+                      class="mt-[3px] accent-accent shrink-0"
                     />
-                    <div class="organize-item-info">
-                      <span class="organize-item-title">{s.title}</span>
-                      <span class="organize-item-path">
+                    <div class="flex-1 min-w-0 flex flex-col gap-px">
+                      <span class="text-base font-medium text-text-primary truncate">{s.title}</span>
+                      <span class="text-xs text-text-tertiary">
                         {t('organize.current', { path: s.currentPath })}
                       </span>
-                      <span class="organize-item-suggest">
+                      <span class="text-sm text-accent font-medium truncate">
                         {t('organize.suggested', { folder: s.suggestedFolder })}
                       </span>
-                      <span class="organize-item-reason">{s.reason}</span>
+                      <span class="text-xs text-text-secondary mt-1 leading-[1.4]">{s.reason}</span>
                     </div>
                   </label>
                 ))}

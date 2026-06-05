@@ -103,7 +103,6 @@ export default function ExportImportPanel({ onClose }: ExportImportPanelProps) {
         setImportPreview(preview);
         setImportPhase('preview');
 
-        // Auto-expand first level of tree
         const expanded = new Set<string>();
         const expandDeep = (nodes: ExportBookmarkNode[], depth: number) => {
           if (depth < 2) {
@@ -167,11 +166,11 @@ export default function ExportImportPanel({ onClose }: ExportImportPanelProps) {
 
     if (isFolder) {
       return (
-        <div key={node.id} class="eit-folder" style={{ paddingLeft: `${depth * 16}px` }}>
-          <div class="eit-folder-header" onClick={() => toggleFolder(node.id)}>
-            <span class={`eit-folder-arrow ${isExpanded ? 'open' : ''}`}>&#9656;</span>
-            <span class="eit-folder-icon">&#128193;</span>
-            <span class="eit-folder-name">{node.title}</span>
+        <div key={node.id} class="cursor-default" style={{ paddingLeft: `${depth * 16}px` }}>
+          <div class="flex items-center gap-1 py-1 px-2 cursor-pointer transition-colors duration-120 border-b border-border-light hover:bg-bg-hover" onClick={() => toggleFolder(node.id)}>
+            <span class={`text-[10px] text-text-tertiary transition-transform duration-120 inline-block w-[14px] text-center shrink-0 ${isExpanded ? 'rotate-90' : ''}`}>&#9656;</span>
+            <span class="text-sm shrink-0">&#128193;</span>
+            <span class="text-sm font-medium text-text-primary truncate">{node.title}</span>
           </div>
           {isExpanded && node.children!.map((child) => renderPreviewNode(child, depth + 1))}
         </div>
@@ -179,9 +178,9 @@ export default function ExportImportPanel({ onClose }: ExportImportPanelProps) {
     }
 
     return (
-      <div key={node.id} class="eit-bookmark" style={{ paddingLeft: `${depth * 16 + 22}px` }}>
-        <span class="eit-bookmark-icon">&#128278;</span>
-        <span class="eit-bookmark-title">{node.title}</span>
+      <div key={node.id} class="flex items-center gap-1 py-1 px-2 border-b border-border-light last:border-b-0" style={{ paddingLeft: `${depth * 16 + 22}px` }}>
+        <span class="text-xs shrink-0 opacity-60">&#128278;</span>
+        <span class="text-xs text-text-secondary truncate">{node.title}</span>
       </div>
     );
   };
@@ -192,67 +191,75 @@ export default function ExportImportPanel({ onClose }: ExportImportPanelProps) {
   };
 
   return (
-    <div class="export-import-panel">
-      <div class="export-import-header">
-        <h3>{t('exportImport.title')}</h3>
+    <div class="flex flex-col h-full overflow-hidden">
+      <div class="flex items-center justify-between p-3 px-3 pt-3 pb-2 shrink-0">
+        <h3 class="text-base font-bold tracking-[-0.01em] m-0">{t('exportImport.title')}</h3>
         <button class="btn-icon" onClick={onClose} title="Close">&times;</button>
       </div>
 
       {/* Tabs */}
-      <div class="export-import-tabs">
+      <div class="flex border-b border-border-light shrink-0 px-3">
         <button
-          class={`export-import-tab ${tab === 'export' ? 'active' : ''}`}
+          class={`flex-1 py-2 px-3 border-none bg-transparent cursor-pointer text-sm font-medium border-b-2 transition-colors duration-120 ${
+            tab === 'export'
+              ? 'text-accent border-accent font-semibold'
+              : 'text-text-secondary border-transparent hover:text-text-primary'
+          }`}
           onClick={() => setTab('export')}
         >
           {t('exportImport.exportTab')}
         </button>
         <button
-          class={`export-import-tab ${tab === 'import' ? 'active' : ''}`}
+          class={`flex-1 py-2 px-3 border-none bg-transparent cursor-pointer text-sm font-medium border-b-2 transition-colors duration-120 ${
+            tab === 'import'
+              ? 'text-accent border-accent font-semibold'
+              : 'text-text-secondary border-transparent hover:text-text-primary'
+          }`}
           onClick={() => setTab('import')}
         >
           {t('exportImport.importTab')}
         </button>
       </div>
 
-      <div class="export-import-body">
+      <div class="flex-1 overflow-y-auto p-3">
         {/* === Export Tab === */}
         {tab === 'export' && (
           <>
             {exportPhase === 'idle' && (
-              <div class="export-import-idle">
-                <p>{t('exportImport.exportDesc')}</p>
-                <div class="export-import-format-select">
+              <div class="flex flex-col items-center justify-center h-full gap-4 text-center">
+                <p class="text-text-secondary text-sm leading-relaxed max-w-[280px]">{t('exportImport.exportDesc')}</p>
+                <div class="flex flex-col gap-2 w-full max-w-[260px]">
                   <button
-                    class="export-import-format-option"
+                    class="flex flex-col gap-1 p-3 px-4 border border-border rounded bg-bg-primary cursor-pointer transition-all duration-120 text-left hover:border-accent hover:shadow-xs"
                     onClick={() => handleExport('json')}
                   >
-                    <span class="eif-format-label">{t('exportImport.jsonFormat')}</span>
-                    <span class="eif-format-desc">{t('exportImport.exportBtn')} (JSON)</span>
+                    <span class="text-base font-semibold text-text-primary">{t('exportImport.jsonFormat')}</span>
+                    <span class="text-xs text-text-tertiary">{t('exportImport.exportBtn')} (JSON)</span>
                   </button>
                   <button
-                    class="export-import-format-option"
+                    class="flex flex-col gap-1 p-3 px-4 border border-border rounded bg-bg-primary cursor-pointer transition-all duration-120 text-left hover:border-accent hover:shadow-xs"
                     onClick={() => handleExport('html')}
                   >
-                    <span class="eif-format-label">{t('exportImport.htmlFormat')}</span>
-                    <span class="eif-format-desc">{t('exportImport.exportBtn')} (HTML)</span>
+                    <span class="text-base font-semibold text-text-primary">{t('exportImport.htmlFormat')}</span>
+                    <span class="text-xs text-text-tertiary">{t('exportImport.exportBtn')} (HTML)</span>
                   </button>
                 </div>
               </div>
             )}
 
             {exportPhase === 'preparing' && (
-              <div class="export-import-loading">
-                <div class="organize-progress-bar">
+              <div class="flex flex-col items-center justify-center h-full gap-3">
+                <div class="w-full h-1 bg-border rounded-full overflow-hidden">
                   <div class="organize-progress-fill" />
                 </div>
-                <p class="export-import-progress-text">{t('exportImport.preparing')}</p>
+                <p class="text-sm text-text-secondary text-center">{t('exportImport.preparing')}</p>
               </div>
             )}
 
             {exportPhase === 'done' && (
-              <div class="export-import-done">
-                <p>{t('exportImport.exportDone', { n: exportBookmarkCount })}</p>
-                <div class="export-import-actions">
+              <div class="flex flex-col items-center justify-center h-full gap-3 text-center">
+                <p class="text-base text-success font-medium">{t('exportImport.exportDone', { n: exportBookmarkCount })}</p>
+                <div class="flex items-center gap-2">
                   <button class="btn-primary" onClick={resetExport}>
                     {t('exportImport.exportAgain')}
                   </button>
@@ -261,8 +268,8 @@ export default function ExportImportPanel({ onClose }: ExportImportPanelProps) {
             )}
 
             {exportPhase === 'error' && (
-              <div class="export-import-error">
-                <p>{t('exportImport.exportError', { error: exportError })}</p>
+              <div class="flex flex-col items-center justify-center h-full gap-3">
+                <p class="text-error text-sm text-center break-words leading-[1.5]">{t('exportImport.exportError', { error: exportError })}</p>
                 <button class="btn-primary" onClick={resetExport}>
                   {t('exportImport.retry')}
                 </button>
@@ -275,50 +282,50 @@ export default function ExportImportPanel({ onClose }: ExportImportPanelProps) {
         {tab === 'import' && (
           <>
             {importPhase === 'idle' && (
-              <div class="export-import-idle">
-                <p>{t('exportImport.importDesc')}</p>
+              <div class="flex flex-col items-center justify-center h-full gap-4 text-center">
+                <p class="text-text-secondary text-sm leading-relaxed max-w-[280px]">{t('exportImport.importDesc')}</p>
                 <div
-                  class="export-import-file-picker"
+                  class="flex flex-col items-center justify-center gap-2 p-5 border-2 border-dashed border-border rounded cursor-pointer transition-all duration-120 w-full max-w-[280px] hover:border-accent hover:bg-accent-light"
                   onClick={() => fileInputRef.current?.click()}
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
                 >
-                  <span class="eifp-icon">&#128196;</span>
-                  <span class="eifp-text">{t('exportImport.chooseFile')}</span>
-                  <span class="eifp-hint">{t('exportImport.dropHint')}</span>
+                  <span class="text-[32px] opacity-60">&#128196;</span>
+                  <span class="text-base font-medium text-text-primary">{t('exportImport.chooseFile')}</span>
+                  <span class="text-xs text-text-tertiary">{t('exportImport.dropHint')}</span>
                 </div>
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept=".json,.html,.htm"
                   onChange={handleFileSelect}
-                  class="export-import-file-input-hidden"
+                  class="hidden"
                 />
               </div>
             )}
 
             {importPhase === 'preview' && importPreview && (
-              <div class="export-import-preview">
-                <p class="export-import-file-selected">
+              <div class="flex flex-col gap-2">
+                <p class="text-sm text-text-secondary m-0">
                   {t('exportImport.fileSelected', { name: selectedFileName })}
                 </p>
-                <p class="export-import-format-badge">
+                <p class="text-xs font-semibold text-accent bg-accent-light py-1 px-2 rounded-xs inline-block self-start">
                   {t('exportImport.formatDetected', { format: importPreview.format.toUpperCase() })}
                 </p>
-                <div class="export-import-counts">
+                <div class="flex gap-3 text-sm text-text-secondary">
                   <span>{t('exportImport.bookmarks', { n: importPreview.bookmarkCount })}</span>
                   <span>{t('exportImport.folders', { n: importPreview.folderCount })}</span>
                 </div>
-                <p class="export-import-will-import">
+                <p class="text-sm text-text-secondary m-0 leading-[1.5]">
                   {t('exportImport.willImport', { count: importPreview.bookmarkCount })}
-                  <strong>"{importPreview.rootFolderName}"</strong>
+                  <strong class="text-text-primary">"{importPreview.rootFolderName}"</strong>
                 </p>
 
-                <div class="export-import-tree">
+                <div class="border border-border-light rounded overflow-y-auto max-h-[240px] bg-bg-secondary">
                   {importPreview.tree.map((node) => renderPreviewNode(node))}
                 </div>
 
-                <div class="export-import-actions">
+                <div class="flex items-center gap-2">
                   <button class="btn-primary" onClick={handleConfirmImport}>
                     {t('exportImport.confirmImport')}
                   </button>
@@ -330,11 +337,11 @@ export default function ExportImportPanel({ onClose }: ExportImportPanelProps) {
             )}
 
             {importPhase === 'importing' && (
-              <div class="export-import-loading">
-                <div class="organize-progress-bar">
+              <div class="flex flex-col items-center justify-center h-full gap-3">
+                <div class="w-full h-1 bg-border rounded-full overflow-hidden">
                   <div class="organize-progress-fill" />
                 </div>
-                <p class="export-import-progress-text">
+                <p class="text-sm text-text-secondary text-center">
                   {importProgress.total > 0
                     ? t('exportImport.importingProgress', { current: importProgress.current, total: importProgress.total })
                     : t('exportImport.importing')}
@@ -343,16 +350,16 @@ export default function ExportImportPanel({ onClose }: ExportImportPanelProps) {
             )}
 
             {importPhase === 'done' && importResult && (
-              <div class="export-import-done">
-                <p>{t('exportImport.importDone', { imported: importResult.imported, skipped: importResult.skipped })}</p>
+              <div class="flex flex-col items-center justify-center h-full gap-3 text-center">
+                <p class="text-base text-success font-medium">{t('exportImport.importDone', { imported: importResult.imported, skipped: importResult.skipped })}</p>
                 {importResult.errors.length > 0 && (
-                  <div class="export-import-results">
+                  <div class="flex flex-col gap-1 max-h-[150px] overflow-y-auto w-full">
                     {importResult.errors.map((err, i) => (
-                      <p key={i} class="export-import-result-item">{err}</p>
+                      <p key={i} class="text-xs text-text-secondary break-words leading-[1.4] m-0">{err}</p>
                     ))}
                   </div>
                 )}
-                <div class="export-import-actions">
+                <div class="flex items-center gap-2">
                   <button class="btn-primary" onClick={resetImport}>
                     {t('exportImport.chooseAnother')}
                   </button>
@@ -361,9 +368,9 @@ export default function ExportImportPanel({ onClose }: ExportImportPanelProps) {
             )}
 
             {importPhase === 'error' && (
-              <div class="export-import-error">
-                <p>{t('exportImport.importError', { error: importError })}</p>
-                <div class="export-import-actions">
+              <div class="flex flex-col items-center justify-center h-full gap-3">
+                <p class="text-error text-sm text-center break-words leading-[1.5]">{t('exportImport.importError', { error: importError })}</p>
+                <div class="flex items-center gap-2">
                   <button class="btn-primary" onClick={resetImport}>
                     {t('exportImport.retry')}
                   </button>
