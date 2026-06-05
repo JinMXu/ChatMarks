@@ -72,7 +72,7 @@ export function useChat(conversationId?: string): UseChatReturn {
   // Listen for streaming responses
   useEffect(() => {
     const listener = (
-      message: { type: string; chunk?: string; results?: SearchResult[]; error?: string },
+      message: { type: string; chunk?: string; results?: SearchResult[]; result?: SearchResult; error?: string },
     ) => {
       switch (message.type) {
         case 'SEARCH_STREAM':
@@ -118,6 +118,30 @@ export function useChat(conversationId?: string): UseChatReturn {
         case 'SEARCH_DONE':
           setStatus('idle');
           assistantMsgRef.current = '';
+          break;
+
+        case 'SEARCH_RESULT_APPEND':
+          if (message.result) {
+            setMessages((prev) => {
+              const copy = [...prev];
+              const last = copy[copy.length - 1];
+              if (last?.role === 'assistant') {
+                copy[copy.length - 1] = {
+                  ...last,
+                  results: [...(last.results || []), message.result!],
+                };
+              } else {
+                copy.push({
+                  id: generateId(),
+                  role: 'assistant',
+                  content: '',
+                  timestamp: Date.now(),
+                  results: [message.result!],
+                });
+              }
+              return copy;
+            });
+          }
           break;
 
         case 'SEARCH_ERROR':
