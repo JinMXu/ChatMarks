@@ -111,6 +111,7 @@ export type RuntimeMessage =
   | { type: 'SEARCH_RESULT'; results: SearchResult[] }
   | { type: 'SEARCH_ERROR'; error: string }
   | { type: 'SEARCH_DONE' }
+  | { type: 'SEARCH_RESULT_APPEND'; result: SearchResult }
   | { type: 'GET_INDEX_STATUS' }
   | { type: 'INDEX_STATUS'; status: IndexStatus }
   | { type: 'START_INDEXING' }
