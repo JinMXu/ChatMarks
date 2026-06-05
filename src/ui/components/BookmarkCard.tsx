@@ -1,6 +1,5 @@
 import type { SearchResult } from '@/shared/types';
 import { relativeTimeLocale } from '@/shared/i18n';
-import { renderMarkdown } from '@/shared/utils';
 import { useI18n } from '@/ui/hooks/useI18n';
 
 interface BookmarkCardProps {
@@ -60,17 +59,6 @@ export default function BookmarkCard({ result }: BookmarkCardProps) {
         </div>
         <span class="bookmark-arrow text-text-tertiary text-base opacity-0 self-center shrink-0">↗</span>
       </div>
-      {result.matchReason && (
-        <div class="text-sm text-text-secondary p-2 px-4 border-t border-border-light bg-bg-secondary leading-[1.5] flex items-start gap-2">
-          <span class="text-xs font-semibold text-accent bg-accent-light py-px px-1.5 rounded-xs whitespace-nowrap shrink-0 mt-px">
-            {t('match.label')}
-          </span>
-          <span
-            class="message-content"
-            dangerouslySetInnerHTML={{ __html: renderMarkdown(result.matchReason) }}
-          />
-        </div>
-      )}
     </div>
   );
 }
