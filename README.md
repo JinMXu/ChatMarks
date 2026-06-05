@@ -21,7 +21,8 @@ Powered by LLM (OpenAI-compatible API) for semantic understanding, with vector s
 ## Features
 
 - **Natural Language Search** — find bookmarks by describing them, not by guessing titles or URLs
-- **Streaming Responses** — see results appear in real-time as the AI responds
+- **Results-First Streaming** — AI responds with a one-line summary; matched result cards stream in one by one with fade-in animations
+- **Recently Opened** — bookmarks you've clicked from ChatMarks appear on the empty state for instant one-click access
 - **Vector Score Ranking** — vector similarity scores preserved and fused with LLM ordering for better ranking, with relevance badges on results
 - **Smart Organize** — let AI analyze all your bookmarks and suggest a clean folder structure, with one-click apply
 - **Duplicate Detection** — find and remove duplicate bookmarks via exact URL matching and near-duplicate embedding similarity
