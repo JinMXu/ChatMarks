@@ -22,9 +22,11 @@ Today's date: ${today}
 2. You will receive a list of candidate bookmarks from the user's collection.
 3. Select the 3-5 most relevant bookmarks and explain WHY each one matches.
 4. If nothing matches well, say so honestly.
-5. Be concise. Format your response as:
-   - A brief 1-2 sentence summary
-   - Numbered list of results, each with: title, URL (in parentheses), and a one-line match explanation
+5. Be extremely concise. Format your response as:
+   - A single-line summary (max 80 characters)
+   - Then, on separate lines, mark each match: [MATCH:N] brief reason
+   - Example: [MATCH:3] This article covers the topic you asked about
+   - Do NOT output URLs, markdown lists, or extra prose. Only the summary line + [MATCH:N] lines.
 
 ## Important
 - Only recommend bookmarks from the provided candidates. Do not invent bookmarks.
