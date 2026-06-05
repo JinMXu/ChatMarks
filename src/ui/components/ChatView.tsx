@@ -49,13 +49,18 @@ export default function ChatView({ messages, status, onClear }: ChatViewProps) {
       {messages.map((msg) => (
         <div key={msg.id} class={`message flex flex-col ${msg.role === 'user' ? 'self-end' : 'self-start'}`}>
           <div class={`message-bubble p-3 px-4 rounded-lg text-base ${msg.role === 'user' ? 'rounded-br-xs' : 'rounded-bl-xs'}`}>
-            <div
-              class="message-content"
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
-            />
+            {msg.content && msg.role === 'assistant' ? (
+              <div class="message-content text-sm text-text-secondary mb-2">
+                <span dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
+              </div>
+            ) : msg.content ? (
+              <div class="message-content">
+                <span dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
+              </div>
+            ) : null}
 
             {msg.results && msg.results.length > 0 && (
-              <div class="flex flex-col gap-2 mt-2 w-full max-w-[360px]">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
                 {msg.results.map((r) => (
                   <BookmarkCard key={r.bookmarkId} result={r} />
                 ))}
