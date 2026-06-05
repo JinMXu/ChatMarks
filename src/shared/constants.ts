@@ -14,6 +14,7 @@ export const EMBEDDING_DIMS = 1536;
 /** Chrome storage keys */
 export const STORAGE_KEY_SETTINGS = 'chatmarks_settings';
 export const STORAGE_KEY_LAST_SESSION = 'chatmarks_last_session';
+export const STORAGE_KEY_RECENT_OPENED = 'chatmarks_recent_opened';
 
 /** Chrome runtime message namespace (optional prefix) */
 export const MSG_PREFIX = 'chatmarks:';

@@ -1,6 +1,7 @@
 import type { SearchResult } from '@/shared/types';
 import { relativeTimeLocale } from '@/shared/i18n';
 import { useI18n } from '@/ui/hooks/useI18n';
+import { recordOpen } from '@/shared/recent-bookmarks';
 
 interface BookmarkCardProps {
   result: SearchResult;
@@ -24,6 +25,7 @@ export default function BookmarkCard({ result }: BookmarkCardProps) {
 
   const handleClick = () => {
     if (result.url) {
+      recordOpen(result);
       chrome.tabs.create({ url: result.url, active: true });
     }
   };

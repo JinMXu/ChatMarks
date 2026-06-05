@@ -157,6 +157,10 @@ export const messages: Record<Locale, Record<string, string>> = {
     'exportImport.folders': '{n} folders',
     'exportImport.bookmarks': '{n} bookmarks',
 
+    // Recent bookmarks
+    'recent.title': 'Recently Opened',
+    'recent.empty': 'Bookmarks you open here will appear for quick access.',
+
     // Time
     'time.justNow': 'just now',
     'time.minutesAgo': '{n}m ago',
@@ -312,6 +316,10 @@ export const messages: Record<Locale, Record<string, string>> = {
     'exportImport.exportAgain': '再次导出',
     'exportImport.folders': '{n} 个文件夹',
     'exportImport.bookmarks': '{n} 个书签',
+
+    // Recent bookmarks
+    'recent.title': '最近打开',
+    'recent.empty': '你在这里打开的书签会出现在此处，方便快速访问。',
 
     // Time
     'time.justNow': '刚刚',
