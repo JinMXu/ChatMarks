@@ -1,33 +1,38 @@
 import type { EmbeddingVector } from '@/shared/types';
 
 let embedder: any = null;
-let isLoaded = false;
+// Cache the in-flight load promise so concurrent loadModel() calls
+// (startup + first EMBED_LOCAL message) share a single pipeline() load.
+let loading: Promise<void> | null = null;
 
-async function loadModel() {
-  if (isLoaded) return;
-  const statusEl = document.getElementById('status');
+async function loadModel(): Promise<void> {
+  if (embedder) return;
+  loading ??= (async () => {
+    const statusEl = document.getElementById('status');
 
-  try {
-    // Dynamically import Transformers.js
-    const { pipeline } = await import('@xenova/transformers');
+    try {
+      // Dynamically import Transformers.js
+      const { pipeline } = await import('@xenova/transformers');
 
-    if (statusEl) statusEl.textContent = 'Loading embedding model...';
+      if (statusEl) statusEl.textContent = 'Loading embedding model...';
 
-    embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+      embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
 
-    isLoaded = true;
-    if (statusEl) statusEl.textContent = 'Model ready';
-    console.log('[ChatMarks Offscreen] Embedding model loaded');
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    isLoaded = false;
-    if (statusEl) statusEl.textContent = `Error: ${msg}`;
-    throw new Error(
-      msg.includes('Failed to resolve module')
-        ? 'Local embedding model not available. @xenova/transformers is not installed. Switch to remote mode or run: npm install @xenova/transformers'
-        : `Failed to load local embedding model: ${msg}`,
-    );
-  }
+      if (statusEl) statusEl.textContent = 'Model ready';
+      console.log('[ChatMarks Offscreen] Embedding model loaded');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (statusEl) statusEl.textContent = `Error: ${msg}`;
+      throw new Error(
+        msg.includes('Failed to resolve module')
+          ? 'Local embedding model not available. @xenova/transformers is not installed. Switch to remote mode or run: npm install @xenova/transformers'
+          : `Failed to load local embedding model: ${msg}`,
+      );
+    }
+  })().finally(() => {
+    loading = null;
+  });
+  return loading;
 }
 
 /**

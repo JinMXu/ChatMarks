@@ -9,6 +9,7 @@ import { relativeTimeLocale } from '@/shared/i18n';
 interface ChatViewProps {
   messages: ChatMessage[];
   status: 'idle' | 'searching' | 'error';
+  error?: string | null;
   onClear: () => void;
 }
 
@@ -20,18 +21,40 @@ function extractDomain(url: string): string {
   }
 }
 
-export default function ChatView({ messages, status, onClear }: ChatViewProps) {
+// Drop entries whose bookmark has been deleted since it was recorded
+async function filterExistingBookmarks(entries: RecentEntry[]): Promise<RecentEntry[]> {
+  const checks = await Promise.all(
+    entries.map(async (entry) => {
+      try {
+        await chrome.bookmarks.get(entry.bookmarkId);
+        return true;
+      } catch {
+        return false;
+      }
+    })
+  );
+  return entries.filter((_, i) => checks[i]);
+}
+
+export default function ChatView({ messages, status, error, onClear }: ChatViewProps) {
   const { t, locale } = useI18n();
   const bottomRef = useRef<HTMLDivElement>(null);
   const [recentItems, setRecentItems] = useState<RecentEntry[]>([]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    // While streaming, chunks arrive rapidly: 'smooth' would keep chasing
+    // the bottom and jitter, so jump instantly instead
+    bottomRef.current?.scrollIntoView({
+      behavior: status === 'searching' ? 'auto' : 'smooth',
+    });
+  }, [messages, status]);
 
   useEffect(() => {
     if (messages.length === 0) {
-      getRecentOpens().then(setRecentItems);
+      getRecentOpens()
+        .then(filterExistingBookmarks)
+        .then(setRecentItems)
+        .catch(() => {});
     }
   }, [messages.length]);
 
@@ -136,6 +159,12 @@ export default function ChatView({ messages, status, onClear }: ChatViewProps) {
               <span />
             </div>
           </div>
+        </div>
+      )}
+
+      {status === 'error' && error && (
+        <div class="p-3 px-4 rounded-lg bg-error-light text-error text-sm leading-[1.5] break-words">
+          {error}
         </div>
       )}
 

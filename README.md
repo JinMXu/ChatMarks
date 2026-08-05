@@ -1,54 +1,70 @@
-# ChatMarks
+<p align="center">
+  <img src="src/public/icons/icon-128.png" alt="ChatMarks Logo" width="96" />
+</p>
+
+<h1 align="center">ChatMarks</h1>
 
 <p align="center">
-  <b>AI-powered bookmark search & organization for Chrome</b>
+  <b>AI-powered bookmark search & organization for Chrome</b><br/>
+  Describe it. Find it. Organize it.
 </p>
 
 <p align="center">
-  <a href="#features">Features</a> ·
-  <a href="#installation">Installation</a> ·
-  <a href="#usage">Usage</a> ·
-  <a href="#architecture">Architecture</a> ·
-  <a href="#development">Development</a>
+  <img src="https://img.shields.io/badge/version-1.2.0-blue" alt="Version" />
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="License" />
+  <img src="https://img.shields.io/badge/chrome-MV3-orange" alt="Chrome MV3" />
+  <img src="https://img.shields.io/badge/built%20with-WXT-purple" alt="WXT" />
+  <img src="https://img.shields.io/badge/UI-Preact-673ab8" alt="Preact" />
 </p>
 
-> [中文文档](README.zh-CN.md)
+<p align="center">
+  <a href="#-features">Features</a> ·
+  <a href="#-installation">Installation</a> ·
+  <a href="#-usage">Usage</a> ·
+  <a href="#-architecture">Architecture</a> ·
+  <a href="#%EF%B8%8F-configuration">Configuration</a> ·
+  <a href="#-development">Development</a>
+</p>
 
-ChatMarks is a Chrome extension that lets you **search your bookmarks using natural language**. Describe what you're looking for — "the Rust article I saved last month" or "that Figma tutorial about auto layout" — and ChatMarks finds it using AI.
+<p align="center">
+  <a href="README.zh-CN.md"><b>中文文档</b></a>
+</p>
 
-Powered by LLM (OpenAI-compatible API) for semantic understanding, with vector search and score fusion for relevance ranking. **100% client-side — your bookmark data never leaves your browser**, except your query + top-K candidates sent to the LLM API you configure.
+---
 
-## Features
+ChatMarks is a Chrome extension that lets you **search your bookmarks using natural language**. Describe what you're looking for — *"the Rust article I saved last month"* or *"that Figma tutorial about auto layout"* — and ChatMarks finds it using AI.
 
-- **Natural Language Search** — find bookmarks by describing them, not by guessing titles or URLs
-- **Results-First Streaming** — AI responds with a one-line summary; matched result cards stream in one by one with fade-in animations
-- **Recently Opened** — bookmarks you've clicked from ChatMarks appear on the empty state for instant one-click access
-- **Vector Score Ranking** — vector similarity scores preserved and fused with LLM ordering for better ranking, with relevance badges on results
-- **Smart Organize** — let AI analyze all your bookmarks and suggest a clean folder structure, with one-click apply
-- **Duplicate Detection** — find and remove duplicate bookmarks via exact URL matching and near-duplicate embedding similarity
-- **Import/Export** — backup and migrate bookmarks with JSON or Chrome-compatible HTML format, with duplicate detection on import
-- **Three UI Modes**:
-  - **Popup** — quick search in a compact popup (Ctrl+Shift+K or toolbar icon)
-  - **Side Panel** — persistent chat with conversation history
-  - **Dashboard** — full-featured workspace with bookmark tree, chat, results, duplicates, organize, import/export, and settings
-- **Dark Mode** — automatically follows system preference
-- **i18n** — Chinese and English interface
-- **Conversation History** — multi-turn search sessions
-- **Auto-Indexing** — bookmarks are automatically indexed on install and kept in sync, with progress feedback in Settings
-- **Separate Embedding API Config** — embedding model can use a different API key/base URL than the chat model, with automatic fallback
-- **Dual Embedding Mode** — remote API (default) or local via Transformers.js (privacy-first)
-- **Markdown Rendering** — AI responses with rich formatting
+Powered by an LLM (any OpenAI-compatible API) for semantic understanding, with vector search and score fusion for relevance ranking.
 
-## Installation
+> 🔒 **Privacy-first**: 100% client-side. Your bookmark data never leaves your browser — only your query and the top-K candidates are sent to the LLM API *you* configure.
+
+## ✨ Features
+
+- 🔍 **Natural Language Search** — find bookmarks by describing them, not by guessing titles or URLs
+- ⚡ **Results-First Streaming** — AI responds with a one-line summary; matched result cards stream in one by one with fade-in animations
+- 🕘 **Recently Opened** — bookmarks you've clicked from ChatMarks appear on the empty state for one-click access
+- 🎯 **Vector Score Ranking** — vector similarity fused with LLM ordering, with relevance badges on every result
+- 🗂️ **Smart Organize** — AI analyzes all your bookmarks and suggests a clean folder structure, with one-click apply
+- 👯 **Duplicate Detection** — exact URL matching plus near-duplicate detection via embedding similarity
+- 📦 **Import / Export** — backup and migrate with JSON or Chrome-compatible HTML, with dedupe on import
+- 🪟 **Three UI Modes** — **Popup** for quick search (`Ctrl+Shift+K`), **Side Panel** for persistent chat with history, **Dashboard** for the full workspace
+- 🌙 **Dark Mode** — automatically follows system preference
+- 🌐 **i18n** — Chinese and English interface
+- 💬 **Conversation History** — multi-turn search sessions
+- 🔄 **Auto-Indexing** — bookmarks indexed on install and kept in sync in real time, with progress feedback
+- 🔑 **Separate Embedding Config** — embedding model can use its own API key/endpoint, with automatic fallback to chat credentials
+- 🧠 **Dual Embedding Mode** — remote API (default) or fully local via Transformers.js
+- 🤖 **Reasoning-Model Friendly** — thinking mode is disabled automatically where supported (DeepSeek, etc.); non-SSE and proxy response formats are handled gracefully
+
+## 📥 Installation
 
 ### Pre-built (Recommended)
 
 1. Go to [Releases](https://github.com/jim1010/ChatMarks/releases)
-2. Download the latest `chatmarks-x.x.x-chrome.zip`
-3. Unzip to a local folder
-4. In Chrome, go to `chrome://extensions`
-5. Enable **Developer mode** (top right)
-6. Click **Load unpacked** and select the unzipped folder
+2. Download the latest `chatmarks-x.x.x-chrome.zip` and unzip it
+3. Open `chrome://extensions` in Chrome
+4. Enable **Developer mode** (top right)
+5. Click **Load unpacked** and select the unzipped folder
 
 ### From Source
 
@@ -59,117 +75,74 @@ npm install
 npm run build
 ```
 
-Then load the `.output/chrome-mv3` folder as an unpacked extension in Chrome.
+Then load `.output/chrome-mv3` as an unpacked extension.
 
-### Development
-
-```bash
-npm run dev          # Chrome dev mode with hot reload
-npm run dev:firefox  # Firefox dev mode
-npm run build        # Production build → .output/chrome-mv3/
-npm run zip          # Build & zip for release → .output/chatmarks-x.x.x-chrome.zip
-```
-
-## Usage
+## 🚀 Usage
 
 ### Setup
 
-After installation, open the Dashboard (click the extension icon or press `Ctrl+Shift+K`), then:
+Open the Dashboard (click the extension icon or press `Ctrl+Shift+K`):
 
-1. Click **Settings** in the left sidebar
+1. Click **Settings** in the sidebar
 2. Fill in your API credentials:
    - **API Base URL** — your OpenAI-compatible endpoint (default: `https://api.openai.com/v1`)
    - **API Key** — your API key
-   - **Chat Model** — the model for responses (e.g., `gpt-4o-mini`, `deepseek-v4-pro`)
-3. (Optional) Configure separate **Embedding API** settings — leave empty to reuse the Chat API credentials above
-   - **Embedding API Base URL** — separate endpoint for embeddings
-   - **Embedding API Key** — separate key for embeddings
-   - **Embedding Model** — the model for vector embeddings (e.g., `text-embedding-3-small`)
-   - **Embedding Mode** — Remote API or Local (Transformers.js)
+   - **Chat Model** — e.g. `gpt-4o-mini`, `deepseek-chat`
+3. *(Optional)* Configure a separate **Embedding API** — leave empty to reuse the chat credentials
 4. Click **Save**
 
-The extension auto-indexes your bookmarks after setup. The index status is shown at the top.
+Bookmarks are auto-indexed after setup; progress is shown at the top.
 
 ### Search
 
-Type a natural language query like:
+Type a query like *"find the Rust article I saved last month"* and ChatMarks will:
 
-> "find the Rust article I saved last month"
-
-ChatMarks will:
-1. Convert your query to a vector embedding
+1. Embed your query into a vector
 2. Find the top-K most similar bookmarks via cosine similarity
 3. Send them with similarity scores to the LLM
 4. Fuse LLM rankings with vector scores for optimal ordering
-5. Display matched results with explanations and relevance badges
+5. Stream back matched results with explanations and relevance badges
+
+> 💡 **Tip:** use a non-reasoning chat model (e.g. `gpt-4o-mini`, `deepseek-chat`). ChatMarks sends requests with thinking disabled where the provider supports it, but a lightweight model is still faster and cheaper for search.
 
 ### Smart Organize
 
-Open the Dashboard, click **Smart Organize** in the left sidebar:
-
-1. Click **Analyze & Organize** — AI reads all your bookmarks
-2. Review the suggested folder structure (grouped by topic)
-3. Toggle individual suggestions on/off
-4. Click **Apply** to create folders and move bookmarks
-5. Empty folders are automatically cleaned up
-
-New folders are created under your **Bookmarks Bar**.
+Dashboard → **Smart Organize**: click **Analyze & Organize**, review the suggested folder structure, toggle individual suggestions, then **Apply**. Empty folders are cleaned up automatically. New folders are created under your **Bookmarks Bar**.
 
 ### Deduplication
 
-Open the Dashboard, click **Duplicates** in the left sidebar:
+Dashboard → **Duplicates**: scan, review grouped results (exact URL duplicates + near-duplicates via embedding similarity at 0.95 threshold), select copies to delete — at least one per group is always preserved.
 
-1. Click **Scan for Duplicates** — the engine scans all bookmarks
-2. Exact duplicates are detected by URL normalization (lowercase, strip tracking params, strip hash)
-3. Near-duplicates are detected via cosine similarity on existing embedding vectors (threshold 0.95)
-4. Review grouped results — select which copies to delete (at least one per group is preserved)
-5. Click **Delete Selected** to remove from Chrome and IndexedDB
+### Import / Export
 
-### Import/Export
+Dashboard → **Import/Export**: one-click export to JSON or Netscape HTML; import with preview (format, counts, collapsible tree) and automatic URL dedupe.
 
-Open the Dashboard, click **Import/Export** in the left sidebar:
-
-**Export:**
-1. Choose JSON or HTML (Chrome-compatible Netscape format)
-2. Click the format button — bookmarks are downloaded immediately
-
-**Import:**
-1. Click the **Import** tab
-2. Select or drag a `.json` / `.html` file
-3. Review the preview — see format, bookmark/folder counts, and collapsible tree
-4. Click **Confirm Import** — bookmarks are imported into a new folder under Bookmarks Bar
-5. Duplicates (same URL) are automatically skipped and reported
-
-## Architecture
+## 🏗 Architecture
 
 ```
 ChatMarks/
 ├── src/
-│   ├── entrypoints/          # Chrome extension entry points
-│   │   ├── background.ts     # Service worker (indexing, search routing)
-│   │   ├── dashboard/        # Full workspace (bookmark tree + chat + panels)
-│   │   ├── popup/            # Compact popup (400px)
-│   │   ├── sidepanel/        # Persistent sidebar with conversations
-│   │   ├── options/          # Standalone settings page
-│   │   └── offscreen/        # Local embedding worker
-│   ├── background/           # Core logic
-│   │   ├── search-engine.ts  # Search pipeline (embed → vector search → LLM → re-rank)
+│   ├── entrypoints/             # Chrome extension entry points
+│   │   ├── background.ts        # Service worker (indexing, search routing)
+│   │   ├── dashboard/           # Full workspace (tree + chat + panels)
+│   │   ├── popup/               # Compact popup (400px)
+│   │   ├── sidepanel/           # Persistent sidebar with conversations
+│   │   ├── options/             # Standalone settings page
+│   │   └── offscreen/           # Local embedding worker
+│   ├── background/              # Core logic
+│   │   ├── search-engine.ts     # Search pipeline (embed → vector → LLM → re-rank)
 │   │   ├── bookmark-indexer.ts  # Full & incremental indexing
 │   │   ├── bookmark-watcher.ts  # Real-time bookmark change detection
-│   │   ├── vector-store.ts   # In-browser vector similarity search
-│   │   ├── llm-client.ts     # OpenAI-compatible API (streaming + non-streaming)
-│   │   ├── embedding-provider.ts  # Remote / local embedding routing
-│   │   ├── prompt-templates.ts    # Search & organize prompts
+│   │   ├── vector-store.ts      # In-browser vector similarity search
+│   │   ├── llm-client.ts        # OpenAI-compatible API (streaming + non-streaming)
+│   │   ├── embedding-provider.ts# Remote / local embedding routing
+│   │   ├── prompt-templates.ts  # Search & organize prompts
 │   │   ├── conversation-manager.ts # Chat session persistence
-│   │   └── message-router.ts      # SW message dispatcher
-│   ├── ui/                   # Preact components & hooks
-│   │   ├── components/       # ChatView, ChatInput, BookmarkCard, etc.
-│   │   ├── hooks/            # useChat, useSettings, useConversations, useI18n
-│   │   └── styles/           # Global CSS with CSS variables & dark mode
-│   └── shared/               # Shared types, utils, i18n, db, organize-engine, duplicates-engine, export-engine, import-engine
-├── wxt.config.ts             # WXT framework config
-├── package.json
-└── tsconfig.json
+│   │   └── message-router.ts    # SW message dispatcher
+│   ├── ui/                      # Preact components & hooks
+│   └── shared/                  # Types, utils, i18n, db, engines
+├── wxt.config.ts                # WXT framework config
+└── package.json
 ```
 
 ### Tech Stack
@@ -179,52 +152,60 @@ ChatMarks/
 | Framework | [WXT](https://wxt.dev/) (MV3) |
 | UI | [Preact](https://preactjs.com/) + CSS Variables |
 | Storage | [IndexedDB](https://github.com/jakearchibald/idb) — bookmarks, embeddings, conversations |
-| LLM | OpenAI-compatible API (streaming chat + embedding) |
+| LLM | OpenAI-compatible API (streaming chat + embeddings) |
 | Vector Search | Pure JS cosine similarity |
 | Local Embedding | [@xenova/transformers](https://github.com/xenova/transformers.js) (optional) |
 | i18n | Custom lightweight solution (zh-CN / en) |
 
 ### Privacy
 
-- **No data leaves your browser** except the search query and top-K candidate bookmarks sent to your configured LLM API
+- **No data leaves your browser** except the search query and top-K candidates sent to your configured LLM API
 - Bookmark titles, URLs, and folder paths are sent to the LLM for semantic matching
 - No analytics, no tracking, no third-party services
-- Optional local embedding mode keeps everything on-device (requires Transformers.js)
+- Optional local embedding mode keeps everything on-device
 
-## Configuration
+## ⚙️ Configuration
 
 | Setting | Default | Description |
 |---------|---------|-------------|
 | API Base URL | `https://api.openai.com/v1` | OpenAI-compatible endpoint |
 | API Key | — | Your API key |
 | Chat Model | `gpt-4o-mini` | Model for search responses & organize |
-| Embedding API Base URL | (empty = reuse Chat) | Separate endpoint for embedding API |
-| Embedding API Key | (empty = reuse Chat) | Separate key for embedding API |
+| Embedding API Base URL | (empty = reuse Chat) | Separate endpoint for embeddings |
+| Embedding API Key | (empty = reuse Chat) | Separate key for embeddings |
 | Embedding Model | `text-embedding-3-small` | Model for vector embeddings |
 | Embedding Mode | Remote | Remote API or Local (Transformers.js) |
 | Vector Search Top-K | 20 | Candidates from vector search |
 | Max Bookmarks (LLM) | 500 | Fallback limit for degraded mode |
-| Language | System | UI language (Chinese / English) |
+| Language | System | UI language (中文 / English) |
 
 ### Supported LLM Providers
 
-Any OpenAI-compatible API works, including:
+Any OpenAI-compatible API works:
 
 - **OpenAI** — `gpt-4o-mini`, `gpt-4o`, `text-embedding-3-small`
-- **DeepSeek** — `deepseek-v4-flash`, `deepseek-v4-pro` (non-reasoning mode recommended for organize)
+- **DeepSeek** — `deepseek-chat`, `deepseek-reasoner` (thinking is disabled automatically)
 - **Ollama** (local) — set base URL to `http://localhost:11434/v1`
-- **Other compatible providers** (Zhipu, Qwen, Moonshot, etc.)
+- **Other compatible providers** — Zhipu, Qwen, Moonshot, etc.
 
-> **Note:** For Smart Organize, use a **non-reasoning model** (e.g., `deepseek-v4-pro` with reasoning off, `gpt-4o-mini`). Reasoning models may consume all token budget on thinking and never output the JSON result.
+## 🛠 Development
 
-## Contributing
+```bash
+npm run dev          # Chrome dev mode with hot reload
+npm run dev:firefox  # Firefox dev mode
+npm run build        # Production build → .output/chrome-mv3/
+npm run zip          # Build & zip for release → .output/chatmarks-x.x.x-chrome.zip
+npx tsc --noEmit     # Type check
+```
 
-Issues and PRs welcome. Key areas for contribution:
+## 🤝 Contributing
+
+Issues and PRs welcome. Key areas:
 
 - Support for more LLM providers / API formats
 - Improved search relevance ranking
 - Test coverage
 
-## License
+## 📄 License
 
 MIT © 2026 ChatMarks

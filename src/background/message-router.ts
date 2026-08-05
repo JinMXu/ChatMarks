@@ -86,6 +86,7 @@ async function handleSearch(
     chrome.runtime.sendMessage({
       type: 'SEARCH_ERROR',
       error: String(err),
-    });
+      conversationId,
+    }).catch(() => {});
   });
 }

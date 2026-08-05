@@ -88,8 +88,8 @@ function generateNetscapeNode(node: ExportBookmarkNode, indent: number): string 
   const pad = '    '.repeat(indent);
   let html = '';
   if (node.children && node.children.length > 0) {
-    html += `${pad}<DT><H3 ADD_DATE="${node.dateAdded}"`;
-    if (node.dateGroupModified) html += ` LAST_MODIFIED="${node.dateGroupModified}"`;
+    html += `${pad}<DT><H3 ADD_DATE="${Math.floor(node.dateAdded / 1000)}"`;
+    if (node.dateGroupModified) html += ` LAST_MODIFIED="${Math.floor(node.dateGroupModified / 1000)}"`;
     html += `>${escapeHtml(node.title)}</H3>\n`;
     html += `${pad}<DL><p>\n`;
     for (const child of node.children) {

@@ -193,7 +193,10 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
                 min={5}
                 max={100}
                 value={form.vectorSearchTopK}
-                onInput={(e) => update('vectorSearchTopK', parseInt((e.target as HTMLInputElement).value))}
+                onInput={(e) => {
+                  const n = parseInt((e.target as HTMLInputElement).value, 10);
+                  if (!Number.isNaN(n)) update('vectorSearchTopK', n);
+                }}
                 class="py-1 px-2 border border-border rounded-xs text-base font-sans bg-bg-primary text-text-primary outline-none transition-colors duration-120 focus:border-accent"
               />
             </label>
@@ -205,7 +208,10 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
                 min={50}
                 max={2000}
                 value={form.maxBookmarksForLLM}
-                onInput={(e) => update('maxBookmarksForLLM', parseInt((e.target as HTMLInputElement).value))}
+                onInput={(e) => {
+                  const n = parseInt((e.target as HTMLInputElement).value, 10);
+                  if (!Number.isNaN(n)) update('maxBookmarksForLLM', n);
+                }}
                 class="py-1 px-2 border border-border rounded-xs text-base font-sans bg-bg-primary text-text-primary outline-none transition-colors duration-120 focus:border-accent"
               />
             </label>

@@ -96,7 +96,9 @@ export function buildDegradedSearchMessage(
     });
   }
 
-  filtered.sort((a, b) => b.dateAdded - a.dateAdded);
+  // Copy before sorting — without a dateRange, `filtered` aliases the
+  // caller's array and an in-place sort would mutate it.
+  filtered = [...filtered].sort((a, b) => b.dateAdded - a.dateAdded);
 
   const dateLocale = locale === 'zh-CN' ? 'zh-CN' : 'en-US';
   const formatted = filtered.map((b, i) => {

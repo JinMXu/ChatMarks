@@ -6,7 +6,9 @@ export default defineConfig({
     description: 'AI-powered bookmark search & organization for Chrome',
     permissions: ['bookmarks', 'storage', 'offscreen', 'sidePanel'],
     optional_permissions: [],
-    host_permissions: [],
+    // Broad host access is required so the background service worker can call
+    // user-configured OpenAI-compatible chat/embedding endpoints (any origin).
+    host_permissions: ['<all_urls>'],
     action: {
       default_title: 'ChatMarks',
       default_icon: {

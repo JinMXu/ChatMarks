@@ -10,7 +10,7 @@ function SidePanelApp() {
   const { t } = useI18n();
   const { conversations, activeId, selectConversation, createConversation, deleteConversation } =
     useConversations();
-  const { messages, status, sendMessage, clearChat } = useChat(activeId);
+  const { messages, status, error, sendMessage, clearChat } = useChat(activeId);
 
   const handleSettingsClick = () => {
     chrome.runtime.openOptionsPage?.();
@@ -50,7 +50,7 @@ function SidePanelApp() {
         </div>
       </aside>
       <main class="flex-1 flex flex-col overflow-hidden min-w-0 bg-bg-primary">
-        <ChatView messages={messages} status={status} onClear={clearChat} />
+        <ChatView messages={messages} status={status} error={error} onClear={clearChat} />
         <ChatInput onSend={sendMessage} disabled={status === 'searching'} />
       </main>
     </div>

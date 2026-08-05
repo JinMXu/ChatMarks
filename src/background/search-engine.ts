@@ -7,6 +7,14 @@ import { getBookmarksByIds, getAllBookmarks, getEmbeddingCount } from '@/shared/
 import type { SearchResult, RuntimeMessage, BookmarkNode } from '@/shared/types';
 
 /**
+ * Broadcast a runtime message, ignoring rejections when no receiver is
+ * listening (common in MV3 when the popup/options page is closed).
+ */
+const broadcast = (msg: unknown) => {
+  chrome.runtime.sendMessage(msg).catch(() => {});
+};
+
+/**
  * Main search pipeline.
  */
 export async function searchBookmarks(
@@ -27,8 +35,15 @@ export async function searchBookmarks(
 
     if (embeddingCount > 0) {
       // Vector search path
-      const queryVector = await embed([query]);
-      const topResults = await vectorSearch(queryVector[0], settings.vectorSearchTopK);
+      let topResults: Awaited<ReturnType<typeof vectorSearch>> = [];
+      try {
+        const queryVector = await embed([query]);
+        topResults = await vectorSearch(queryVector[0], settings.vectorSearchTopK);
+      } catch (embedErr) {
+        // Embedding/vector lookup failed (e.g. API outage) — degrade to
+        // local bookmarks instead of failing the whole search.
+        console.warn('Embedding failed, falling back to degraded search:', embedErr);
+      }
 
       if (topResults.length === 0) {
         // Fall back to degraded mode
@@ -93,17 +108,19 @@ export async function searchBookmarks(
               };
               matchResults.push(result);
 
-              chrome.runtime.sendMessage({
+              broadcast({
                 type: 'SEARCH_RESULT_APPEND',
                 result,
+                conversationId,
               } as RuntimeMessage);
             }
           } else {
             // Non-MATCH line: stream as text
             streamedContent += line + '\n';
-            chrome.runtime.sendMessage({
+            broadcast({
               type: 'SEARCH_STREAM',
               chunk: line + '\n',
+              conversationId,
             } as RuntimeMessage);
           }
         }
@@ -129,18 +146,28 @@ export async function searchBookmarks(
           };
           matchResults.push(result);
 
-          chrome.runtime.sendMessage({
+          broadcast({
             type: 'SEARCH_RESULT_APPEND',
             result,
+            conversationId,
           } as RuntimeMessage);
         }
       } else {
         streamedContent += streamBuffer;
-        chrome.runtime.sendMessage({
+        broadcast({
           type: 'SEARCH_STREAM',
           chunk: streamBuffer,
+          conversationId,
         } as RuntimeMessage);
       }
+    }
+
+    // An empty response would otherwise surface as "nothing happens" in the
+    // UI — fail loudly so the error banner tells the user what went wrong.
+    if (!fullResponse.trim()) {
+      throw new Error(
+        'LLM returned an empty response. Check your chat model and API settings.',
+      );
     }
 
     // Use incrementally collected results; fall back to URL extraction if empty
@@ -155,21 +182,23 @@ export async function searchBookmarks(
     }
 
     // Send results
-    chrome.runtime.sendMessage({
+    broadcast({
       type: 'SEARCH_RESULT',
       results,
+      conversationId,
     } as RuntimeMessage);
 
     // Save assistant message to conversation
     await convManager.addAssistantMessage(conv.id, streamedContent, results);
 
     // Signal done
-    chrome.runtime.sendMessage({ type: 'SEARCH_DONE' } as RuntimeMessage);
+    broadcast({ type: 'SEARCH_DONE', conversationId } as RuntimeMessage);
   } catch (err) {
     console.error('Search error:', err);
-    chrome.runtime.sendMessage({
+    broadcast({
       type: 'SEARCH_ERROR',
       error: String(err),
+      conversationId,
     } as RuntimeMessage);
   }
 }
@@ -203,7 +232,15 @@ function extractResults(
   candidates: BookmarkNode[],
 ): SearchResult[] {
   const results: SearchResult[] = [];
-  const urlMap = new Map(candidates.map((c) => [c.url?.toLowerCase(), c]));
+  // Normalize URLs the same way on both sides: lowercase, strip trailing
+  // punctuation, strip trailing slash.
+  const normalizeUrl = (u: string) =>
+    u.toLowerCase().replace(/[.,;:!?/]+$/, '');
+  const urlMap = new Map(
+    candidates
+      .filter((c) => c.url)
+      .map((c) => [normalizeUrl(c.url!), c]),
+  );
 
   // Match URLs in the LLM response
   const urlRegex = /https?:\/\/[^\s)\]"']+/gi;
@@ -212,7 +249,7 @@ function extractResults(
   if (matches) {
     const seen = new Set<string>();
     for (const url of matches) {
-      const normalized = url.toLowerCase().replace(/[.,;:!?]+$/, '');
+      const normalized = normalizeUrl(url);
       const candidate = urlMap.get(normalized);
       if (candidate && !seen.has(candidate.id)) {
         seen.add(candidate.id);

@@ -25,7 +25,7 @@ export default function BookmarkCard({ result }: BookmarkCardProps) {
 
   const handleClick = () => {
     if (result.url) {
-      recordOpen(result);
+      recordOpen(result).catch((err) => console.error('Failed to record open:', err));
       chrome.tabs.create({ url: result.url, active: true });
     }
   };

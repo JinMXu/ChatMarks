@@ -31,7 +31,12 @@ export function useConversations() {
 
   const deleteConversation = useCallback(
     async (id: ConversationId) => {
-      await chrome.runtime.sendMessage({ type: 'DELETE_CONVERSATION', conversationId: id });
+      try {
+        await chrome.runtime.sendMessage({ type: 'DELETE_CONVERSATION', conversationId: id });
+      } catch (err) {
+        console.error('Failed to delete conversation:', err);
+        return;
+      }
       if (activeId === id) {
         setActiveId(undefined);
       }

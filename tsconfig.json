@@ -1,18 +1,11 @@
 {
+  // Extends the WXT-generated config so auto-import globals (defineBackground,
+  // etc.) and WXT path aliases are typed. Keep in sync with .wxt/tsconfig.json.
+  "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
     "jsxImportSource": "preact",
-    "noEmit": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@shared/*": ["./src/shared/*"],
@@ -20,5 +13,6 @@
       "@ui/*": ["./src/ui/*"]
     }
   },
-  "include": ["src/**/*", "entrypoints/**/*", "wxt.config.ts"]
+  "include": ["src/**/*", "wxt.config.ts", ".wxt/wxt.d.ts"],
+  "exclude": [".output"]
 }

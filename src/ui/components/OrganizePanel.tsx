@@ -73,13 +73,11 @@ export default function OrganizePanel({ onClose }: OrganizePanelProps) {
   };
 
   const toggleItem = (bookmarkId: string) => {
-    setSuggestions((prev) => {
-      const next = prev.map((s) =>
-        s.bookmarkId === bookmarkId ? { ...s, selected: !s.selected } : s,
-      );
-      setSelectAll(next.every((s) => s.selected));
-      return next;
-    });
+    const next = suggestions.map((s) =>
+      s.bookmarkId === bookmarkId ? { ...s, selected: !s.selected } : s,
+    );
+    setSuggestions(next);
+    setSelectAll(next.every((s) => s.selected));
   };
 
   const handleApply = async () => {
@@ -147,13 +145,13 @@ export default function OrganizePanel({ onClose }: OrganizePanelProps) {
                 <div class="organize-progress-fill" />
               </div>
               <div class="flex justify-between gap-1">
-                <span class={`text-xs transition-colors duration-120 whitespace-nowrap ${phase === 'scanning' ? 'text-accent font-semibold' : phase !== 'idle' && phase !== 'scanning' ? 'text-success' : 'text-text-tertiary'}`}>
+                <span class={`text-xs transition-colors duration-120 whitespace-nowrap ${phase === 'scanning' ? 'text-accent font-semibold' : 'text-success'}`}>
                   1. {locale === 'zh-CN' ? '读取' : 'Read'}
                 </span>
-                <span class={`text-xs transition-colors duration-120 whitespace-nowrap ${phase === 'sending' ? 'text-accent font-semibold' : phase === 'waiting' || phase === 'result' ? 'text-success' : 'text-text-tertiary'}`}>
+                <span class={`text-xs transition-colors duration-120 whitespace-nowrap ${phase === 'sending' ? 'text-accent font-semibold' : phase === 'waiting' ? 'text-success' : 'text-text-tertiary'}`}>
                   2. {locale === 'zh-CN' ? '发送' : 'Send'}
                 </span>
-                <span class={`text-xs transition-colors duration-120 whitespace-nowrap ${phase === 'waiting' ? 'text-accent font-semibold' : phase === 'result' ? 'text-success' : 'text-text-tertiary'}`}>
+                <span class={`text-xs transition-colors duration-120 whitespace-nowrap ${phase === 'waiting' ? 'text-accent font-semibold' : 'text-text-tertiary'}`}>
                   3. {locale === 'zh-CN' ? 'AI 分析' : 'AI'}
                 </span>
               </div>

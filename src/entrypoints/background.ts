@@ -30,7 +30,14 @@ export default defineBackground(() => {
 
   // Listen for messages from popup/sidepanel/options
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    messageRouter(message, sender, sendResponse);
+    messageRouter(message, sender, sendResponse).catch((err) => {
+      console.error('[ChatMarks] messageRouter error:', err);
+      try {
+        sendResponse({ error: String(err) });
+      } catch {
+        // Channel may already be closed — nothing else to do
+      }
+    });
     return true; // always keep open — messageRouter handles sendResponse internally
   });
 

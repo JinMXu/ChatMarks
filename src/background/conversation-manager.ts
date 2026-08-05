@@ -96,7 +96,6 @@ export class ConversationManager {
  * Get all conversation IDs from the database.
  */
 export async function getAllConversationIds(): Promise<ConversationId[]> {
-  const { getAllConversations } = await import('@/shared/db');
-  const conversations = await getAllConversations();
-  return conversations.map((c) => c.id);
+  const { getAllConversationKeys } = await import('@/shared/db');
+  return getAllConversationKeys();
 }

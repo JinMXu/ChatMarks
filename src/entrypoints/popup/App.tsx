@@ -8,13 +8,13 @@ import { useSettings } from '@/ui/hooks/useSettings';
 
 function PopupApp() {
   const { settings } = useSettings();
-  const { messages, status, sendMessage, clearChat, openSidePanel } = useChat();
+  const { messages, status, error, sendMessage, clearChat, openSidePanel } = useChat();
 
   if (!settings) {
+    // Settings not loaded yet: render an empty shell instead of a
+    // SettingsBar whose save button would be clickable but inert
     return (
-      <div class="w-[400px] h-[560px] flex flex-col overflow-hidden bg-bg-primary">
-        <SettingsBar onSave={() => {}} />
-      </div>
+      <div class="w-[400px] h-[560px] flex flex-col overflow-hidden bg-bg-primary" />
     );
   }
 
@@ -22,7 +22,7 @@ function PopupApp() {
     <div class="app-container w-[400px] h-[560px] flex flex-col overflow-hidden bg-bg-primary">
       <SettingsBar onSave={openSidePanel} />
       <IndexStatus />
-      <ChatView messages={messages} status={status} onClear={clearChat} />
+      <ChatView messages={messages} status={status} error={error} onClear={clearChat} />
       <ChatInput onSend={sendMessage} disabled={status === 'searching'} />
     </div>
   );

@@ -105,6 +105,30 @@ function OptionsApp() {
               class="py-2 px-3 border border-border rounded-sm text-base font-sans bg-bg-primary text-text-primary outline-none transition-all duration-120 focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-light)]"
             />
           </label>
+
+          <p class="text-sm text-text-tertiary mb-4">{t('settings.embeddingApiHint')}</p>
+
+          <label class="flex flex-col gap-1 text-base font-medium text-text-primary mb-4">
+            {t('settings.embeddingApiBaseUrl')}
+            <input
+              type="text"
+              value={form.embeddingApiBaseUrl}
+              onInput={(e) => update('embeddingApiBaseUrl', (e.target as HTMLInputElement).value)}
+              placeholder={form.apiBaseUrl || 'https://api.openai.com/v1'}
+              class="py-2 px-3 border border-border rounded-sm text-base font-sans bg-bg-primary text-text-primary outline-none transition-all duration-120 placeholder:text-text-tertiary focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-light)]"
+            />
+          </label>
+
+          <label class="flex flex-col gap-1 text-base font-medium text-text-primary mb-4">
+            {t('settings.embeddingApiKey')}
+            <input
+              type="password"
+              value={form.embeddingApiKey}
+              onInput={(e) => update('embeddingApiKey', (e.target as HTMLInputElement).value)}
+              placeholder={form.apiKey ? '(using chat API key)' : 'sk-...'}
+              class="py-2 px-3 border border-border rounded-sm text-base font-sans bg-bg-primary text-text-primary outline-none transition-all duration-120 placeholder:text-text-tertiary focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-light)]"
+            />
+          </label>
         </section>
 
         <section class="mb-6 bg-bg-secondary border border-border-light rounded p-5">
@@ -131,9 +155,10 @@ function OptionsApp() {
               min={5}
               max={100}
               value={form.vectorSearchTopK}
-              onInput={(e) =>
-                update('vectorSearchTopK', parseInt((e.target as HTMLInputElement).value))
-              }
+              onInput={(e) => {
+                const n = parseInt((e.target as HTMLInputElement).value, 10);
+                if (!Number.isNaN(n)) update('vectorSearchTopK', n);
+              }}
               class="py-2 px-3 border border-border rounded-sm text-base font-sans bg-bg-primary text-text-primary outline-none transition-all duration-120 focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-light)]"
             />
           </label>
@@ -145,9 +170,10 @@ function OptionsApp() {
               min={50}
               max={2000}
               value={form.maxBookmarksForLLM}
-              onInput={(e) =>
-                update('maxBookmarksForLLM', parseInt((e.target as HTMLInputElement).value))
-              }
+              onInput={(e) => {
+                const n = parseInt((e.target as HTMLInputElement).value, 10);
+                if (!Number.isNaN(n)) update('maxBookmarksForLLM', n);
+              }}
               class="py-2 px-3 border border-border rounded-sm text-base font-sans bg-bg-primary text-text-primary outline-none transition-all duration-120 focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-light)]"
             />
           </label>

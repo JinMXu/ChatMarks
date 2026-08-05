@@ -17,7 +17,19 @@ export async function getRecentOpens(): Promise<RecentEntry[]> {
   return (stored[STORAGE_KEY_RECENT_OPENED] || []) as RecentEntry[];
 }
 
-export async function recordOpen(result: SearchResult): Promise<void> {
+// Serialize read-modify-write cycles so rapid consecutive opens don't
+// overwrite each other (each recordOpen reads the list written by the
+// previous one)
+let queue: Promise<unknown> = Promise.resolve();
+
+export function recordOpen(result: SearchResult): Promise<void> {
+  const task = queue.then(() => recordOpenInternal(result));
+  // Keep the queue alive even if a write fails
+  queue = task.catch(() => {});
+  return task;
+}
+
+async function recordOpenInternal(result: SearchResult): Promise<void> {
   const list = await getRecentOpens();
 
   // Remove existing entry with same bookmarkId

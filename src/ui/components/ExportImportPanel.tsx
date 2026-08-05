@@ -49,6 +49,7 @@ export default function ExportImportPanel({ onClose }: ExportImportPanelProps) {
     setImportProgress({ current: 0, total: 0 });
     setSelectedFileName('');
     setExpandedFolders(new Set());
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleExport = async (format: 'json' | 'html') => {

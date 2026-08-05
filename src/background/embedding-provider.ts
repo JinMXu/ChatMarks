@@ -27,6 +27,7 @@ async function embedRemote(texts: string[], settings: Settings): Promise<Embeddi
 
   const response = await fetch(url, {
     method: 'POST',
+    signal: AbortSignal.timeout(30_000),
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
@@ -52,6 +53,39 @@ async function embedRemote(texts: string[], settings: Settings): Promise<Embeddi
 /**
  * Local embedding via offscreen document.
  */
+// Serializes offscreen document creation so concurrent embedLocal calls
+// don't both pass the getContexts check and race createDocument.
+let creatingOffscreen: Promise<void> | null = null;
+
+// Closes the offscreen document after a period of inactivity so the MiniLM
+// model (tens of MB) doesn't sit in memory forever. An MV3 service worker is
+// normally killed by Chrome when idle anyway; this timer covers the case
+// where the SW stays alive for a long time (e.g. a persistent message port).
+const OFFSCREEN_IDLE_TIMEOUT_MS = 5 * 60 * 1000;
+let offscreenIdleTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleOffscreenIdleClose(): void {
+  if (offscreenIdleTimer !== null) {
+    clearTimeout(offscreenIdleTimer);
+  }
+  offscreenIdleTimer = setTimeout(() => {
+    offscreenIdleTimer = null;
+    void (async () => {
+      try {
+        const contexts = await chrome.runtime.getContexts({
+          contextTypes: [chrome.runtime.ContextType.OFFSCREEN_DOCUMENT],
+          documentUrls: [chrome.runtime.getURL('/offscreen.html')],
+        });
+        if (contexts.length > 0) {
+          await chrome.offscreen.closeDocument();
+        }
+      } catch {
+        // Document already gone or close failed; next embedLocal recreates it.
+      }
+    })();
+  }, OFFSCREEN_IDLE_TIMEOUT_MS);
+}
+
 async function embedLocal(texts: string[]): Promise<EmbeddingVector[]> {
   // Check if offscreen document exists
   const existingContexts = await chrome.runtime.getContexts({
@@ -60,15 +94,20 @@ async function embedLocal(texts: string[]): Promise<EmbeddingVector[]> {
   });
 
   if (existingContexts.length === 0) {
-    await chrome.offscreen.createDocument({
-      url: '/offscreen.html',
-      reasons: [chrome.offscreen.Reason.DOM_SCRAPING],
-      justification: 'Local embedding model inference',
-    });
+    creatingOffscreen ??= chrome.offscreen
+      .createDocument({
+        url: '/offscreen.html',
+        reasons: [chrome.offscreen.Reason.DOM_SCRAPING],
+        justification: 'Local embedding model inference',
+      })
+      .finally(() => {
+        creatingOffscreen = null;
+      });
+    await creatingOffscreen;
   }
 
   // Send message to offscreen document
-  return new Promise((resolve, reject) => {
+  const vectors = await new Promise<EmbeddingVector[]>((resolve, reject) => {
     chrome.runtime.sendMessage(
       { type: 'EMBED_LOCAL', texts },
       (response) => {
@@ -82,4 +121,8 @@ async function embedLocal(texts: string[]): Promise<EmbeddingVector[]> {
       },
     );
   });
+
+  // Reset the idle close timer on every successful embed.
+  scheduleOffscreenIdleClose();
+  return vectors;
 }

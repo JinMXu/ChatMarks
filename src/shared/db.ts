@@ -9,12 +9,10 @@ import {
 } from './constants';
 import type { BookmarkNode, EmbeddingEntry, Conversation } from './types';
 
-let dbInstance: IDBPDatabase | null = null;
+let dbPromise: Promise<IDBPDatabase> | null = null;
 
-export async function getDB(): Promise<IDBPDatabase> {
-  if (dbInstance) return dbInstance;
-
-  dbInstance = await openDB(DB_NAME, DB_VERSION, {
+export function getDB(): Promise<IDBPDatabase> {
+  dbPromise ??= openDB(DB_NAME, DB_VERSION, {
     upgrade(db) {
       if (!db.objectStoreNames.contains(STORE_BOOKMARKS)) {
         db.createObjectStore(STORE_BOOKMARKS, { keyPath: 'id' });
@@ -30,9 +28,18 @@ export async function getDB(): Promise<IDBPDatabase> {
         db.createObjectStore(STORE_META, { keyPath: 'key' });
       }
     },
+    blocked() {
+      console.warn('[ChatMarks] IndexedDB upgrade blocked by another open connection');
+    },
+  }).then(db => {
+    db.addEventListener('versionchange', () => {
+      db.close();
+      dbPromise = null;
+    });
+    return db;
   });
 
-  return dbInstance;
+  return dbPromise;
 }
 
 // --- Bookmark CRUD ---
@@ -104,6 +111,12 @@ export async function getAllEmbeddings(): Promise<EmbeddingEntry[]> {
   return db.getAll(STORE_EMBEDDINGS);
 }
 
+export async function getAllEmbeddingKeys(): Promise<string[]> {
+  const db = await getDB();
+  const keys = await db.getAllKeys(STORE_EMBEDDINGS);
+  return keys as string[];
+}
+
 export async function getEmbeddingCount(): Promise<number> {
   const db = await getDB();
   return db.count(STORE_EMBEDDINGS);
@@ -129,6 +142,12 @@ export async function getConversation(id: string): Promise<Conversation | undefi
 export async function getAllConversations(): Promise<Conversation[]> {
   const db = await getDB();
   return db.getAll(STORE_CONVERSATIONS);
+}
+
+export async function getAllConversationKeys(): Promise<string[]> {
+  const db = await getDB();
+  const keys = await db.getAllKeys(STORE_CONVERSATIONS);
+  return keys as string[];
 }
 
 export async function deleteConversation(id: string): Promise<void> {

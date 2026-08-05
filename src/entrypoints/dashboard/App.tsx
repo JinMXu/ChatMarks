@@ -15,13 +15,13 @@ type RightPanel = 'results' | 'organize' | 'duplicates' | 'exportImport' | 'sett
 
 function DashboardApp() {
   const { t } = useI18n();
-  const { messages, status, sendMessage, clearChat } = useChat();
+  const { messages, status, error, sendMessage, clearChat } = useChat();
   const [rightPanel, setRightPanel] = useState<RightPanel>('results');
 
   const latestResults: SearchResult[] = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
       if (messages[i].role === 'assistant' && messages[i].results?.length) {
-        return messages[i].results;
+        return messages[i].results ?? [];
       }
     }
     return [];
@@ -66,7 +66,7 @@ function DashboardApp() {
 
       {/* Center: Chat */}
       <main class="flex-1 flex flex-col overflow-hidden min-w-0">
-        <ChatView messages={messages} status={status} onClear={clearChat} />
+        <ChatView messages={messages} status={status} error={error} onClear={clearChat} />
         <ChatInput onSend={sendMessage} disabled={status === 'searching'} />
       </main>
 

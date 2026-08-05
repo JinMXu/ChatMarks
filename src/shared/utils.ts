@@ -22,7 +22,8 @@ export function flattenBookmarkTree(
         title: node.title,
         url: node.url,
         dateAdded: node.dateAdded ?? Date.now(),
-        dateLastUsed: node.dateLastUsed,
+        // @types/chrome's BookmarkTreeNode is missing `dateLastUsed`
+        dateLastUsed: 'dateLastUsed' in node ? (node.dateLastUsed as number | undefined) : undefined,
         dateGroupModified,
         path: currentPath,
         richText,
@@ -115,6 +116,7 @@ export function parseRelativeDateExpression(query: string): { start?: number; en
   const patterns: Record<string, () => { start: number; end: number }> = {
     '上个月|last month|上月': () => {
       const d = new Date(now);
+      d.setDate(1);
       d.setMonth(d.getMonth() - 1);
       const start = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
       const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999).getTime();
@@ -181,15 +183,28 @@ export function getDateContext(): string {
  * Handles: bold, italic, code, code blocks, lists, links, headers, line breaks.
  */
 export function renderMarkdown(text: string): string {
+  // Stash code blocks/inline code as placeholders so their content is escaped
+  // exactly once and is not touched by the markdown replacements below.
+  const codeSegments: string[] = [];
+  const stash = (segment: string): string => {
+    codeSegments.push(segment);
+    return `\u0000${codeSegments.length - 1}\u0000`;
+  };
+
   let html = text;
 
   // Code blocks (must be before inline code)
   html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-    return `<pre><code>${escapeHtml(code.trim())}</code></pre>`;
+    return stash(`<pre><code>${escapeHtml(code.trim())}</code></pre>`);
   });
 
   // Inline code
-  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  html = html.replace(/`([^`]+)`/g, (_, code) => {
+    return stash(`<code>${escapeHtml(code)}</code>`);
+  });
+
+  // Escape all remaining text so the replacements below only add controlled tags.
+  html = escapeHtml(html);
 
   // Bold
   html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
@@ -209,15 +224,22 @@ export function renderMarkdown(text: string): string {
   // Wrap consecutive <li> in <ul>
   html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
 
-  // Links
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  // Links (text is already escaped; only http(s) URLs are linkified)
+  html = html.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (match, label, url) =>
+    /^https?:\/\//i.test(url)
+      ? `<a href="${url}" target="_blank" rel="noopener">${label}</a>`
+      : match,
+  );
 
-  // Plain URLs → clickable links
+  // Plain URLs → clickable links (http(s) only by construction of the pattern)
   html = html.replace(/(?<!["'>])(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
 
   // Line breaks
   html = html.replace(/\n\n/g, '</p><p>');
   html = html.replace(/\n/g, '<br/>');
+
+  // Restore stashed code segments
+  html = html.replace(/\u0000(\d+)\u0000/g, (_, i) => codeSegments[Number(i)]);
 
   // Wrap in paragraph if not already wrapped in block elements
   if (!/^<(p|pre|ul|ol|h[1-4]|li)/.test(html.trim())) {
@@ -231,5 +253,7 @@ function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }

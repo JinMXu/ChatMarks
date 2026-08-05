@@ -39,11 +39,13 @@ function parseNodeFromElement(el: Element): ExportBookmarkNode {
 
   const addDate = el.getAttribute('ADD_DATE');
   if (addDate) {
-    node.dateAdded = parseInt(addDate, 10) * 1000;
+    const parsed = parseInt(addDate, 10);
+    node.dateAdded = Number.isFinite(parsed) ? parsed * 1000 : 0;
   }
   const lastMod = el.getAttribute('LAST_MODIFIED');
   if (lastMod) {
-    node.dateGroupModified = parseInt(lastMod, 10) * 1000;
+    const parsed = parseInt(lastMod, 10);
+    node.dateGroupModified = Number.isFinite(parsed) ? parsed * 1000 : 0;
   }
 
   const href = el.getAttribute('HREF');
@@ -82,12 +84,7 @@ export function parseNetscapeHtml(html: string): ExportBookmarkNode[] {
   const doc = parser.parseFromString(html, 'text/html');
   const topDL = doc.querySelector('DL');
   if (!topDL) {
-    // If standard <DL> not found, try to find any DL (some exports vary)
-    const anyDL = doc.querySelector('DL');
-    if (!anyDL) {
-      return [];
-    }
-    return parseDL(anyDL);
+    return [];
   }
   return parseDL(topDL);
 }
@@ -150,6 +147,10 @@ export async function runImport(
   function countAll(nodes: ExportBookmarkNode[]): number {
     let count = 0;
     for (const node of nodes) {
+      // Skip empty folders (no URL and no children): the preview does not
+      // count them and createNode does not create them, so exclude them
+      // from the progress total as well
+      if (!node.url && (!node.children || node.children.length === 0)) continue;
       count++;
       if (node.children && node.children.length > 0) {
         count += countAll(node.children);
@@ -161,16 +162,29 @@ export async function runImport(
   const total = countAll(tree);
   let processed = 0;
 
+  // Build a URL set of existing bookmarks once, instead of searching per bookmark
+  const existingUrls = new Set<string>();
+  const existingTree = await chrome.bookmarks.getTree();
+  (function collectUrls(nodes: chrome.bookmarks.BookmarkTreeNode[]) {
+    for (const node of nodes) {
+      if (node.url) existingUrls.add(node.url);
+      if (node.children) collectUrls(node.children);
+    }
+  })(existingTree);
+
   const rootFolder = await chrome.bookmarks.create({
     parentId: '1',
     title: rootFolderName,
   });
 
   async function createNode(node: ExportBookmarkNode, parentId: string): Promise<void> {
+    // Skip empty folders (no URL and no children): the preview does not
+    // count them, so do not create or count them here either
+    if (!node.url && (!node.children || node.children.length === 0)) return;
+
     if (node.url) {
       try {
-        const existing = await chrome.bookmarks.search({ url: node.url });
-        if (existing.length > 0) {
+        if (existingUrls.has(node.url)) {
           result.skipped++;
         } else {
           await chrome.bookmarks.create({
@@ -178,6 +192,7 @@ export async function runImport(
             title: node.title,
             url: node.url,
           });
+          existingUrls.add(node.url);
           result.imported++;
         }
       } catch (err) {

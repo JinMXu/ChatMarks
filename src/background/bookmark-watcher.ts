@@ -1,4 +1,5 @@
 import { indexBookmark, removeBookmarkFromIndex, startIndexing } from './bookmark-indexer';
+import { flattenBookmarkTree } from '@/shared/utils';
 
 let watcherStarted = false;
 
@@ -19,8 +20,17 @@ export function startBookmarkWatcher(): void {
     });
   });
 
-  chrome.bookmarks.onRemoved.addListener((id) => {
-    removeBookmarkFromIndex(id).catch(console.error);
+  chrome.bookmarks.onRemoved.addListener((id, removeInfo) => {
+    // Chrome fires onRemoved only for the root node; when a folder is removed,
+    // its descendants are in removeInfo.node.children. Collect every removed
+    // bookmark (nodes with a url) and drop them from the index.
+    const removedIds = flattenBookmarkTree(removeInfo.node.children ?? []).map((n) => n.id);
+    if (removeInfo.node.url) {
+      removedIds.unshift(id);
+    }
+    Promise.all(removedIds.map((removedId) => removeBookmarkFromIndex(removedId))).catch(
+      console.error,
+    );
   });
 
   chrome.bookmarks.onMoved.addListener((_id, moveInfo) => {

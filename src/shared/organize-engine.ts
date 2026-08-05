@@ -61,7 +61,7 @@ export async function runOrganize(
     locale === 'zh-CN' ? 'AI 正在分析中，请稍候...' : 'AI is analyzing, please wait...',
   );
 
-  const response = await chatCompletion(messages, { maxTokens: 131072, temperature: 0.2 });
+  const response = await chatCompletion(messages, { maxTokens: 16384, temperature: 0.2 });
 
   if (!response || response.trim().length === 0) {
     throw new Error('LLM returned empty response');
@@ -119,11 +119,11 @@ export async function applyOrganization(suggestions: OrganizeSuggestion[]): Prom
  */
 async function cleanupEmptyFolders(): Promise<void> {
   const tree = await chrome.bookmarks.getTree();
-  const emptyIds: string[] = [];
+  const emptyIds = new Set<string>();
   findEmptyFolders(tree, emptyIds);
 
-  // Delete in reverse order (deepest first) to handle nested empties
-  for (const id of emptyIds.reverse()) {
+  // Insertion order is deepest-first (children are collected before parents)
+  for (const id of emptyIds) {
     try {
       await chrome.bookmarks.remove(id);
     } catch {
@@ -134,21 +134,30 @@ async function cleanupEmptyFolders(): Promise<void> {
 
 function findEmptyFolders(
   nodes: chrome.bookmarks.BookmarkTreeNode[],
-  result: string[],
-): void {
+  result: Set<string>,
+): boolean {
+  let allEmpty = true;
   for (const node of nodes) {
-    if (node.url) continue; // not a folder
+    if (node.url) {
+      allEmpty = false; // a bookmark lives in this subtree
+      continue;
+    }
     const children = node.children || [];
-    // Recurse first (bottom-up)
-    findEmptyFolders(children, result);
-    // Then check if this folder is now empty
-    if (children.length === 0) {
-      // Skip system root folders
-      if (node.id !== '0' && node.id !== '1' && node.id !== '2') {
-        result.push(node.id);
-      }
+    // Recurse first (bottom-up); the subtree is empty only if every
+    // descendant is itself scheduled for deletion.
+    const subtreeEmpty = findEmptyFolders(children, result);
+    if (!subtreeEmpty) {
+      allEmpty = false;
+      continue;
+    }
+    // Skip system root folders
+    if (node.id !== '0' && node.id !== '1' && node.id !== '2') {
+      result.add(node.id);
+    } else {
+      allEmpty = false; // system folders are never deleted
     }
   }
+  return allEmpty;
 }
 
 // ── Internal helpers ──────────────────────────────────────────
@@ -172,7 +181,7 @@ function parseOrganizeResponse(text: string): OrganizeGroup[] | null {
   }
 
   // 4. Find "folders" key and wrap
-  const foldersMatch = json.match(/"folders"\s*:\s*\[([\s\S]*?)\](?=\s*[,\}])/);
+  const foldersMatch = json.match(/"folders"\s*:\s*\[([\s\S]*)\](?=\s*[,\}])/);
   if (foldersMatch) {
     parsed = tryParse(`{"folders":[${foldersMatch[1]}]}`);
     if (parsed) return extractFolders(parsed);
@@ -250,7 +259,7 @@ async function ensureFolder(
   let parentId: string | undefined = BOOKMARKS_BAR_ID;
 
   for (const part of parts) {
-    const key = parentId ? `${parentId}/${part}` : part;
+    const key: string = parentId ? `${parentId}/${part}` : part;
     if (cache.has(key)) {
       parentId = cache.get(key)!;
       continue;
@@ -265,7 +274,7 @@ async function ensureFolder(
       cache.set(key, found.id);
       parentId = found.id;
     } else {
-      const created = await chrome.bookmarks.create({
+      const created: chrome.bookmarks.BookmarkTreeNode = await chrome.bookmarks.create({
         parentId,
         title: part,
       });

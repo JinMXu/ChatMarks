@@ -107,11 +107,11 @@ export const DEFAULT_SETTINGS: Settings = {
 /** Messages sent between SW and UI */
 export type RuntimeMessage =
   | { type: 'SEARCH'; query: string; conversationId?: string }
-  | { type: 'SEARCH_STREAM'; chunk: string }
-  | { type: 'SEARCH_RESULT'; results: SearchResult[] }
-  | { type: 'SEARCH_ERROR'; error: string }
-  | { type: 'SEARCH_DONE' }
-  | { type: 'SEARCH_RESULT_APPEND'; result: SearchResult }
+  | { type: 'SEARCH_STREAM'; chunk: string; conversationId?: string }
+  | { type: 'SEARCH_RESULT'; results: SearchResult[]; conversationId?: string }
+  | { type: 'SEARCH_ERROR'; error: string; conversationId?: string }
+  | { type: 'SEARCH_DONE'; conversationId?: string }
+  | { type: 'SEARCH_RESULT_APPEND'; result: SearchResult; conversationId?: string }
   | { type: 'GET_INDEX_STATUS' }
   | { type: 'INDEX_STATUS'; status: IndexStatus }
   | { type: 'START_INDEXING' }

@@ -20,6 +20,10 @@ export default function BookmarkTree() {
       const roots = rawTree[0]?.children || [];
       setTree(roots.map(cleanNode));
       setLoading(false);
+    }).catch((err) => {
+      console.error('Failed to load bookmark tree:', err);
+      setTree([]);
+      setLoading(false);
     });
   }, []);
 

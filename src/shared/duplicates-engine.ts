@@ -1,5 +1,4 @@
 import { getAllBookmarks, deleteBookmark, deleteEmbedding, getMeta, setMeta, getAllEmbeddings } from './db';
-import { cosineSimilarity } from './utils';
 import type { BookmarkNode, EmbeddingEntry } from './types';
 
 // --- Types ---
@@ -101,28 +100,53 @@ function detectExactDuplicates(bookmarks: BookmarkNode[]): DuplicateSet[] {
 
 // --- Near Duplicate Detection ---
 
-function detectNearDuplicates(
+async function detectNearDuplicates(
   bookmarks: BookmarkNode[],
   embeddings: EmbeddingEntry[],
+  excludeIds: Set<string>,
   threshold = 0.95,
-): DuplicateSet[] {
+): Promise<DuplicateSet[]> {
   const embeddingMap = new Map<string, number[]>();
   for (const e of embeddings) {
-    embeddingMap.set(e.bookmarkId, e.vector);
+    // Skip bookmarks already covered by exact-duplicate groups
+    if (!excludeIds.has(e.bookmarkId)) {
+      embeddingMap.set(e.bookmarkId, e.vector);
+    }
   }
 
-  const candidates = bookmarks.filter((b) => b.url && embeddingMap.has(b.id));
+  const candidates = bookmarks.filter(
+    (b) => b.url && !excludeIds.has(b.id) && embeddingMap.has(b.id),
+  );
   if (candidates.length < 2) return [];
 
-  // Pairwise cosine similarity
+  // Precompute vector norms once so each pair only needs a dot product
+  const norms = new Map<string, number>();
+  for (const b of candidates) {
+    const v = embeddingMap.get(b.id)!;
+    let sum = 0;
+    for (let i = 0; i < v.length; i++) sum += v[i] * v[i];
+    norms.set(b.id, Math.sqrt(sum));
+  }
+
+  // Pairwise cosine similarity (dot product over cached norms)
   const edges: [string, string, number][] = [];
   for (let i = 0; i < candidates.length; i++) {
+    // Yield to the main thread periodically to avoid blocking the UI
+    if (i > 0 && i % 50 === 0) {
+      await new Promise((r) => setTimeout(r, 0));
+    }
     const a = candidates[i];
     const va = embeddingMap.get(a.id)!;
+    const normA = norms.get(a.id)!;
+    if (normA === 0) continue;
     for (let j = i + 1; j < candidates.length; j++) {
       const b = candidates[j];
       const vb = embeddingMap.get(b.id)!;
-      const sim = cosineSimilarity(va, vb);
+      const normB = norms.get(b.id)!;
+      if (normB === 0) continue;
+      let dot = 0;
+      for (let k = 0; k < va.length; k++) dot += va[k] * vb[k];
+      const sim = dot / (normA * normB);
       if (sim >= threshold) {
         edges.push([a.id, b.id, sim]);
       }
@@ -202,13 +226,24 @@ export async function runDuplicatesDetection(
 
   const exactDupes = detectExactDuplicates(bookmarks);
 
+  // Bookmarks already covered by exact-duplicate groups: identical normalized
+  // URLs imply identical embeddings (similarity 1.0), so they would also
+  // cluster in near-duplicate detection. Exclude them to keep the groups
+  // disjoint and shrink the pairwise comparison set.
+  const exactCoveredIds = new Set<string>();
+  for (const set of exactDupes) {
+    for (const item of set.items) {
+      exactCoveredIds.add(item.bookmarkId);
+    }
+  }
+
   // Near-duplicate detection (only if embeddings exist)
   let nearDupes: DuplicateSet[] = [];
   if (bookmarks.some((b) => b.indexed)) {
     onProgress?.(locale === 'zh-CN' ? '正在检测相似书签...' : 'Detecting near-duplicates...');
     try {
       const embeddings = await getAllEmbeddings();
-      nearDupes = detectNearDuplicates(bookmarks, embeddings);
+      nearDupes = await detectNearDuplicates(bookmarks, embeddings, exactCoveredIds);
     } catch {
       // Near-duplicate detection is best-effort
     }
